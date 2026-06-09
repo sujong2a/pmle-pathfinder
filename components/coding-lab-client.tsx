@@ -287,19 +287,25 @@ function FeedbackPanel({ feedback }: { feedback?: CodingFeedback }) {
     );
   }
 
+  const displayFeedback = getDisplayFeedback(feedback);
+  const hasGeminiFeedback = hasUsableGeminiFeedback(feedback);
+  const showStructuredLists = !containsStructuredFeedback(displayFeedback);
+
   return (
     <section className="rounded-lg border border-line bg-white p-5 shadow-soft">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-black">AI 피드백</h2>
+        <h2 className="text-lg font-black">{hasGeminiFeedback ? "AI 피드백" : "자동 평가 피드백"}</h2>
         <Sparkles size={18} className="text-brand" />
       </div>
       <div className="mt-4 rounded-md bg-blue-50 p-4 text-sm leading-7 text-slate-800">
-        <p className="whitespace-pre-wrap">{feedback.ai_feedback || feedback.feedback}</p>
+        <p className="whitespace-pre-wrap">{displayFeedback}</p>
       </div>
-      <div className="mt-4 grid gap-3">
-        <MiniList title="개선점" items={feedback.improvements} />
-        <MiniList title="추천 학습" items={feedback.recommended_study} />
-      </div>
+      {showStructuredLists && (
+        <div className="mt-4 grid gap-3">
+          <MiniList title="개선점" items={feedback.improvements} />
+          <MiniList title="추천 학습" items={feedback.recommended_study} />
+        </div>
+      )}
     </section>
   );
 }
@@ -347,4 +353,22 @@ function difficultyLabel(value: string) {
   if (value === "easy") return "초급";
   if (value === "medium") return "중급";
   return "고급";
+}
+
+function getDisplayFeedback(feedback: CodingFeedback) {
+  const rawFeedback = feedback.ai_feedback?.trim() || feedback.feedback.trim();
+  const geminiFailureIndex = rawFeedback.indexOf("Gemini 피드백을 현재 생성하지 못했습니다.");
+  if (geminiFailureIndex >= 0) {
+    return rawFeedback.slice(0, geminiFailureIndex).trim() || feedback.feedback.trim();
+  }
+  return rawFeedback;
+}
+
+function containsStructuredFeedback(value: string) {
+  return value.includes("개선점:") || value.includes("개선점\n") || value.includes("추천 학습:") || value.includes("추천 학습\n");
+}
+
+function hasUsableGeminiFeedback(feedback: CodingFeedback) {
+  const value = feedback.ai_feedback?.trim();
+  return Boolean(value) && !value.includes("Gemini 피드백을 현재 생성하지 못했습니다.");
 }

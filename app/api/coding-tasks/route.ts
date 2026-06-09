@@ -153,8 +153,6 @@ async function buildGeminiCodingFeedback({
   userExpectedOutput: string;
   evaluation: CodingEvaluationResult;
 }) {
-  const fallback = buildRuleFeedback(evaluation);
-
   try {
     const provider = createGeminiProvider();
     return await provider.generateText({
@@ -193,11 +191,20 @@ ${JSON.stringify(evaluation, null, 2)}
       ]
     });
   } catch (error) {
-    return `${fallback}\n\nGemini 피드백을 현재 생성하지 못했습니다. ${error instanceof Error ? error.message : "알 수 없는 오류"}`;
+    console.warn("Gemini coding feedback unavailable:", toSafeGeminiErrorMessage(error));
+    return "";
   }
 }
 
 function buildRuleFeedback(evaluation: CodingEvaluationResult) {
   const status = evaluation.passed ? "제출 조건을 통과했습니다." : "아직 재제출이 필요합니다.";
   return `${status}\n\n개선점:\n${evaluation.improvements.map((item) => `- ${item}`).join("\n")}\n\n추천 학습:\n${evaluation.recommendedStudy.map((item) => `- ${item}`).join("\n")}`;
+}
+
+function toSafeGeminiErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return "unknown Gemini error";
+  if (error.message.toLowerCase().includes("prepayment credits are depleted")) {
+    return "Gemini credits are depleted.";
+  }
+  return error.message;
 }
