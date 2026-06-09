@@ -375,7 +375,7 @@ export function LessonClient({ lessonId }: LessonClientProps) {
               <div className="mt-4 grid gap-5">
                 {quizzes.map((quiz, index) => (
                   <div key={quiz.id} className="rounded-md border border-line p-4">
-                    <p className="font-black">
+                    <p className="whitespace-pre-wrap font-black leading-7">
                       {index + 1}. {quiz.question}
                     </p>
                     <div className="mt-3 grid gap-2">
@@ -391,7 +391,7 @@ export function LessonClient({ lessonId }: LessonClientProps) {
                             key={option.id}
                             onClick={() => setSelections((current) => ({ ...current, [quiz.id]: option.id }))}
                             className={clsx(
-                              "min-h-11 rounded-md border px-3 py-2 text-left text-sm font-semibold transition",
+                              "min-h-11 whitespace-pre-wrap rounded-md border px-3 py-2 text-left text-sm font-semibold leading-6 transition",
                               selected && !evaluated && "border-brand bg-blue-50",
                               !selected && !evaluated && "border-line bg-white hover:border-brand",
                               correctChoice && "border-emerald-400 bg-emerald-50 text-emerald-800",
@@ -411,7 +411,7 @@ export function LessonClient({ lessonId }: LessonClientProps) {
                           {results[quiz.id] ? <CheckCircle2 size={16} className="text-emerald-700" /> : <XCircle size={16} className="text-danger" />}
                           {results[quiz.id] ? "정답" : "오답"}
                         </p>
-                        <p className="mt-1">{quiz.explanation}</p>
+                        <p className="mt-1 whitespace-pre-wrap">{quiz.explanation}</p>
                       </div>
                     )}
                   </div>

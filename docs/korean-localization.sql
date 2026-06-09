@@ -602,3 +602,405 @@ explanation = case id
   else explanation
 end
 where id::text like '35000000-%';
+
+-- Bilingual learning terms and assessment text.
+-- Concept explanations stay Korean. Core terms are shown as Korean (English) for future English-source study.
+update public.lessons as lesson
+set title = terms.title
+from (
+  values
+    ('python-variables', '변수 (variables)'),
+    ('python-data-types', '자료형 (data types)'),
+    ('python-conditionals', '조건문 (conditionals)'),
+    ('python-loops', '반복문 (loops)'),
+    ('python-functions', '함수 (functions)'),
+    ('python-lists', '리스트 (lists)'),
+    ('python-dictionaries', '딕셔너리 (dictionaries)'),
+    ('python-file-io', '파일입출력 (file input/output)'),
+    ('python-exceptions', '예외처리 (exception handling)'),
+    ('data-numpy', 'NumPy (넘파이)'),
+    ('data-pandas', 'Pandas (판다스)'),
+    ('data-csv', 'CSV (comma-separated values)'),
+    ('data-missing-values', '결측치 (missing values)'),
+    ('data-visualization', '데이터 시각화 (data visualization)'),
+    ('stats-mean', '평균 (mean)'),
+    ('stats-variance', '분산 (variance)'),
+    ('stats-standard-deviation', '표준편차 (standard deviation)'),
+    ('stats-probability', '확률 (probability)'),
+    ('stats-correlation', '상관관계 (correlation)'),
+    ('ml-supervised-learning', '지도학습 (supervised learning)'),
+    ('ml-unsupervised-learning', '비지도학습 (unsupervised learning)'),
+    ('ml-regression', '회귀 (regression)'),
+    ('ml-classification', '분류 (classification)'),
+    ('ml-overfitting', '과적합 (overfitting)'),
+    ('ml-metrics', '평가 지표 (evaluation metrics)'),
+    ('ml-scikit-learn', 'Scikit-learn'),
+    ('gcp-cloud-fundamentals', 'Cloud Fundamentals (클라우드 기본)'),
+    ('gcp-iam', 'IAM (Identity and Access Management)'),
+    ('gcp-storage', 'Storage (저장소)'),
+    ('gcp-bigquery', 'BigQuery'),
+    ('gcp-compute-engine', 'Compute Engine'),
+    ('gcp-cloud-functions', 'Cloud Functions'),
+    ('gcp-vertex-ai', 'Vertex AI'),
+    ('gcp-automl', 'AutoML'),
+    ('gcp-model-registry', 'Model Registry'),
+    ('gcp-endpoints', 'Endpoints'),
+    ('gcp-monitoring', 'Monitoring')
+) as terms(slug, title)
+where lesson.slug = terms.slug;
+
+update public.quizzes as quiz
+set question = texts.question,
+    explanation = texts.explanation
+from (
+  values
+    ('30000000-0000-4000-8000-000000000001', E'What does a variable do?\n해석: 변수는 어떤 역할을 하나요?', E'A variable stores a value with a name.\n해석: 변수는 값에 이름을 붙여 저장합니다.'),
+    ('30000000-0000-4000-8000-000000000002', E'Which data type is used for text?\n해석: 문자 데이터를 나타내는 자료형은 무엇인가요?', E'Text values are strings, also called str in Python.\n해석: 문자 데이터는 string이며 Python에서는 str이라고 부릅니다.'),
+    ('30000000-0000-4000-8000-000000000003', E'Which keyword starts a conditional?\n해석: 조건문을 시작할 때 사용하는 키워드는 무엇인가요?', E'if starts a conditional statement.\n해석: if는 조건문을 시작하는 키워드입니다.'),
+    ('30000000-0000-4000-8000-000000000004', E'Why do we use a loop?\n해석: 반복문은 왜 사용하나요?', E'A loop repeats work without writing the same code many times.\n해석: 반복문은 같은 코드를 여러 번 쓰지 않고 작업을 반복하게 해 줍니다.'),
+    ('31000000-0000-4000-8000-000000000001', E'What keyword creates a function?\n해석: 함수를 만들 때 사용하는 키워드는 무엇인가요?', E'def creates a Python function.\n해석: def는 Python 함수를 만드는 키워드입니다.'),
+    ('31000000-0000-4000-8000-000000000002', E'Which method adds a value to the end of a list?\n해석: 리스트 끝에 값을 추가할 때 사용하는 메서드는 무엇인가요?', E'append adds a new value to the end of a list.\n해석: append는 리스트 끝에 새 값을 추가합니다.'),
+    ('31000000-0000-4000-8000-000000000003', E'What structure uses key-value pairs?\n해석: key-value 쌍으로 데이터를 저장하는 구조는 무엇인가요?', E'A dictionary stores key-value pairs.\n해석: 딕셔너리는 key와 value를 짝으로 저장합니다.'),
+    ('31000000-0000-4000-8000-000000000004', E'Which mode reads a file?\n해석: 파일을 읽기 모드로 열 때 사용하는 모드는 무엇인가요?', E'r is read mode.\n해석: r은 read 모드입니다.'),
+    ('31000000-0000-4000-8000-000000000005', E'Which keyword handles an error from try?\n해석: try에서 발생한 에러를 처리하는 키워드는 무엇인가요?', E'except handles an error from try.\n해석: except는 try에서 발생한 에러를 처리합니다.'),
+    ('32000000-0000-4000-8000-000000000001', E'What is NumPy mainly used for?\n해석: NumPy는 주로 무엇에 사용하나요?', E'NumPy is used for numeric array calculation.\n해석: NumPy는 숫자 배열 계산에 사용합니다.'),
+    ('32000000-0000-4000-8000-000000000002', E'What does a Pandas DataFrame represent?\n해석: Pandas DataFrame은 무엇을 나타내나요?', E'A DataFrame represents table-shaped data.\n해석: DataFrame은 표 형태 데이터를 나타냅니다.'),
+    ('32000000-0000-4000-8000-000000000003', E'Which Pandas function loads CSV files?\n해석: CSV 파일을 불러오는 Pandas 함수는 무엇인가요?', E'read_csv loads CSV files.\n해석: read_csv는 CSV 파일을 읽습니다.'),
+    ('32000000-0000-4000-8000-000000000004', E'Which function finds missing values?\n해석: 결측치를 찾는 함수는 무엇인가요?', E'isna helps find missing values.\n해석: isna는 결측치를 찾는 데 사용합니다.'),
+    ('32000000-0000-4000-8000-000000000005', E'Why do we visualize data?\n해석: 데이터를 시각화하는 이유는 무엇인가요?', E'Visualization helps us see patterns.\n해석: 시각화는 데이터의 패턴을 보기 쉽게 해 줍니다.'),
+    ('33000000-0000-4000-8000-000000000001', E'What is the mean?\n해석: 평균은 무엇인가요?', E'The mean is the average.\n해석: 평균은 데이터의 합계를 개수로 나눈 대표값입니다.'),
+    ('33000000-0000-4000-8000-000000000002', E'What does variance measure?\n해석: 분산은 무엇을 측정하나요?', E'Variance measures spread.\n해석: 분산은 값들이 평균에서 얼마나 퍼져 있는지 나타냅니다.'),
+    ('33000000-0000-4000-8000-000000000003', E'What is standard deviation?\n해석: 표준편차는 무엇인가요?', E'Standard deviation is the square root of variance.\n해석: 표준편차는 분산의 제곱근입니다.'),
+    ('33000000-0000-4000-8000-000000000004', E'What range can probability have?\n해석: 확률 값의 범위는 어디부터 어디까지인가요?', E'Probability ranges from 0 to 1.\n해석: 확률은 0부터 1 사이의 값입니다.'),
+    ('33000000-0000-4000-8000-000000000005', E'Does correlation always mean causation?\n해석: 상관관계는 항상 인과관계를 뜻하나요?', E'No. Correlation does not automatically mean causation.\n해석: 아닙니다. 상관관계는 인과관계를 자동으로 의미하지 않습니다.'),
+    ('34000000-0000-4000-8000-000000000001', E'What is the key trait of supervised learning?\n해석: 지도학습의 핵심 특징은 무엇인가요?', E'Supervised learning uses labeled examples.\n해석: 지도학습은 정답 라벨이 있는 예제로 학습합니다.'),
+    ('34000000-0000-4000-8000-000000000002', E'What does unsupervised learning look for?\n해석: 비지도학습은 무엇을 찾나요?', E'It looks for patterns without labels.\n해석: 비지도학습은 라벨 없이 패턴이나 그룹을 찾습니다.'),
+    ('34000000-0000-4000-8000-000000000003', E'What does regression predict?\n해석: 회귀는 무엇을 예측하나요?', E'Regression predicts continuous numeric values.\n해석: 회귀는 연속적인 숫자 값을 예측합니다.'),
+    ('34000000-0000-4000-8000-000000000004', E'What does classification predict?\n해석: 분류는 무엇을 예측하나요?', E'Classification predicts categories or labels.\n해석: 분류는 범주나 라벨을 예측합니다.'),
+    ('34000000-0000-4000-8000-000000000005', E'What is a sign of overfitting?\n해석: 과적합의 대표적인 신호는 무엇인가요?', E'High training score but low test score suggests overfitting.\n해석: 학습 점수는 높은데 테스트 점수가 낮으면 과적합을 의심합니다.'),
+    ('34000000-0000-4000-8000-000000000006', E'Which metric is common for classification?\n해석: 분류 문제에서 자주 쓰는 평가 지표는 무엇인가요?', E'Accuracy is a common classification metric.\n해석: accuracy는 분류에서 자주 쓰는 기본 지표입니다.'),
+    ('34000000-0000-4000-8000-000000000007', E'Which Scikit-learn method trains a model?\n해석: Scikit-learn에서 모델을 학습할 때 쓰는 메서드는 무엇인가요?', E'fit trains a model.\n해석: fit은 모델을 학습할 때 사용하는 대표 메서드입니다.'),
+    ('35000000-0000-4000-8000-000000000001', E'What is the main container for GCP resources and billing?\n해석: GCP 리소스와 과금을 묶는 기본 단위는 무엇인가요?', E'A project is the main GCP container.\n해석: 프로젝트는 GCP 리소스, API, IAM, 과금을 묶는 기본 단위입니다.'),
+    ('35000000-0000-4000-8000-000000000002', E'What are the key parts of IAM?\n해석: IAM을 구성하는 핵심 요소는 무엇인가요?', E'IAM connects member, role, and resource.\n해석: IAM은 member, role, resource의 관계로 이해합니다.'),
+    ('35000000-0000-4000-8000-000000000003', E'What does Cloud Storage store inside buckets?\n해석: Cloud Storage bucket 안에는 무엇을 저장하나요?', E'Cloud Storage stores objects such as files, images, training data, and artifacts.\n해석: Cloud Storage는 파일, 이미지, 학습 데이터, 모델 artifact 같은 객체를 저장합니다.'),
+    ('35000000-0000-4000-8000-000000000004', E'Which service is best for large-scale SQL analytics?\n해석: 대규모 SQL 분석에 적합한 서비스는 무엇인가요?', E'BigQuery is a serverless data warehouse built for large-scale SQL analytics.\n해석: BigQuery는 대규모 SQL 분석에 적합한 서버리스 데이터 웨어하우스입니다.'),
+    ('35000000-0000-4000-8000-000000000005', E'Which service gives direct VM control?\n해석: VM을 직접 제어할 수 있는 서비스는 무엇인가요?', E'Compute Engine provides VM-level control.\n해석: Compute Engine은 VM을 직접 만들고 제어하는 서비스입니다.'),
+    ('35000000-0000-4000-8000-000000000006', E'Which service is best for small event-driven functions?\n해석: 작은 이벤트 기반 함수를 실행하기 좋은 서비스는 무엇인가요?', E'Cloud Functions runs small code units in response to events.\n해석: Cloud Functions는 이벤트에 반응하는 작은 코드 실행에 적합합니다.'),
+    ('35000000-0000-4000-8000-000000000007', E'Which Google Cloud platform manages ML training, deployment, prediction, and monitoring?\n해석: ML 학습, 배포, 예측, 모니터링을 관리하는 Google Cloud 플랫폼은 무엇인가요?', E'Vertex AI is Google Cloud''s unified ML platform.\n해석: Vertex AI는 Google Cloud의 통합 ML 플랫폼입니다.'),
+    ('35000000-0000-4000-8000-000000000008', E'Which Vertex AI approach is useful for fast low-code model baselines?\n해석: 빠른 low-code baseline 모델에 유용한 Vertex AI 방식은 무엇인가요?', E'AutoML is useful for fast low-code training.\n해석: AutoML은 빠른 low-code 학습에 유용합니다.'),
+    ('35000000-0000-4000-8000-000000000009', E'Which Vertex AI feature helps track model versions and deployment status?\n해석: 모델 버전과 배포 상태를 추적하는 기능은 무엇인가요?', E'Model Registry tracks model versions and deployment state.\n해석: Model Registry는 모델 버전과 배포 상태를 추적합니다.'),
+    ('35000000-0000-4000-8000-000000000010', E'Which Vertex AI resource receives online prediction requests?\n해석: 온라인 예측 요청을 받는 Vertex AI 리소스는 무엇인가요?', E'An endpoint receives online prediction requests for deployed models.\n해석: Endpoint는 배포된 모델의 온라인 예측 요청을 받습니다.'),
+    ('35000000-0000-4000-8000-000000000011', E'What helps check drift and service health after deployment?\n해석: 배포 후 drift와 서비스 상태를 확인하는 기능은 무엇인가요?', E'Model Monitoring checks drift, skew, latency, errors, and service health.\n해석: Model Monitoring은 drift, skew, latency, error 같은 운영 신호를 확인합니다.')
+) as texts(id, question, explanation)
+where quiz.id = texts.id::uuid;
+
+update public.quiz_options as opt
+set option_text = texts.option_text
+from (
+  values
+    ('40000000-0000-4000-8000-000000000001', E'It stores a value with a name.\n해석: 값에 이름을 붙여 저장합니다.'),
+    ('40000000-0000-4000-8000-000000000002', E'It deletes all code.\n해석: 모든 코드를 삭제합니다.'),
+    ('40000000-0000-4000-8000-000000000003', E'It only changes colors.\n해석: 색만 바꿉니다.'),
+    ('40000000-0000-4000-8000-000000000004', E'str\n해석: 문자열 자료형'),
+    ('40000000-0000-4000-8000-000000000005', E'int\n해석: 정수 자료형'),
+    ('40000000-0000-4000-8000-000000000006', E'bool\n해석: 참/거짓 자료형'),
+    ('40000000-0000-4000-8000-000000000007', E'if\n해석: 조건문 시작 키워드'),
+    ('40000000-0000-4000-8000-000000000008', E'repeat\n해석: 반복이라는 일반 단어이지만 Python 조건문 키워드는 아닙니다.'),
+    ('40000000-0000-4000-8000-000000000009', E'folder\n해석: 폴더'),
+    ('40000000-0000-4000-8000-000000000010', E'To repeat work.\n해석: 작업을 반복하기 위해 사용합니다.'),
+    ('40000000-0000-4000-8000-000000000011', E'To stop the computer.\n해석: 컴퓨터를 멈추기 위해 사용합니다.'),
+    ('40000000-0000-4000-8000-000000000012', E'To create an account.\n해석: 계정을 만들기 위해 사용합니다.'),
+    ('41000000-0000-4000-8000-000000000001', E'def\n해석: 함수 정의 키워드'),
+    ('41000000-0000-4000-8000-000000000002', E'make\n해석: 만든다는 일반 단어이지만 Python 함수 정의 키워드는 아닙니다.'),
+    ('41000000-0000-4000-8000-000000000003', E'loop\n해석: 반복'),
+    ('41000000-0000-4000-8000-000000000004', E'append\n해석: 리스트 끝에 값을 추가하는 메서드'),
+    ('41000000-0000-4000-8000-000000000005', E'delete_all\n해석: 모든 것을 삭제한다는 의미의 예시 이름'),
+    ('41000000-0000-4000-8000-000000000006', E'freeze\n해석: 멈추다/얼리다'),
+    ('41000000-0000-4000-8000-000000000007', E'Dictionary\n해석: 딕셔너리'),
+    ('41000000-0000-4000-8000-000000000008', E'String only\n해석: 문자열만'),
+    ('41000000-0000-4000-8000-000000000009', E'Comment\n해석: 주석'),
+    ('41000000-0000-4000-8000-000000000010', E'r\n해석: read 모드'),
+    ('41000000-0000-4000-8000-000000000011', E'paint\n해석: 칠하다'),
+    ('41000000-0000-4000-8000-000000000012', E'sleep\n해석: 잠자기/대기'),
+    ('41000000-0000-4000-8000-000000000013', E'except\n해석: 예외 처리 키워드'),
+    ('41000000-0000-4000-8000-000000000014', E'folder\n해석: 폴더'),
+    ('41000000-0000-4000-8000-000000000015', E'chart\n해석: 차트'),
+    ('42000000-0000-4000-8000-000000000001', E'Numeric array calculation\n해석: 숫자 배열 계산'),
+    ('42000000-0000-4000-8000-000000000002', E'Email design only\n해석: 이메일 디자인만'),
+    ('42000000-0000-4000-8000-000000000003', E'Password storage only\n해석: 비밀번호 저장만'),
+    ('42000000-0000-4000-8000-000000000004', E'Table-shaped data\n해석: 표 형태 데이터'),
+    ('42000000-0000-4000-8000-000000000005', E'Single password\n해석: 하나의 비밀번호'),
+    ('42000000-0000-4000-8000-000000000006', E'Screen color\n해석: 화면 색상'),
+    ('42000000-0000-4000-8000-000000000007', E'read_csv\n해석: CSV 파일 읽기 함수'),
+    ('42000000-0000-4000-8000-000000000008', E'read_color\n해석: 색을 읽는다는 예시 이름'),
+    ('42000000-0000-4000-8000-000000000009', E'open_account\n해석: 계정을 연다는 예시 이름'),
+    ('42000000-0000-4000-8000-000000000010', E'isna\n해석: 결측치 여부 확인 함수'),
+    ('42000000-0000-4000-8000-000000000011', E'paint\n해석: 칠하다'),
+    ('42000000-0000-4000-8000-000000000012', E'deploy\n해석: 배포하다'),
+    ('42000000-0000-4000-8000-000000000013', E'To see patterns\n해석: 패턴을 보기 위해'),
+    ('42000000-0000-4000-8000-000000000014', E'To hide data\n해석: 데이터를 숨기기 위해'),
+    ('42000000-0000-4000-8000-000000000015', E'To delete Python\n해석: Python을 삭제하기 위해'),
+    ('43000000-0000-4000-8000-000000000001', E'Average\n해석: 평균'),
+    ('43000000-0000-4000-8000-000000000002', E'Maximum only\n해석: 최댓값만'),
+    ('43000000-0000-4000-8000-000000000003', E'File name\n해석: 파일 이름'),
+    ('43000000-0000-4000-8000-000000000004', E'Spread\n해석: 퍼짐 정도'),
+    ('43000000-0000-4000-8000-000000000005', E'Font size\n해석: 글자 크기'),
+    ('43000000-0000-4000-8000-000000000006', E'Login time\n해석: 로그인 시간'),
+    ('43000000-0000-4000-8000-000000000007', E'Square root of variance\n해석: 분산의 제곱근'),
+    ('43000000-0000-4000-8000-000000000008', E'A list method\n해석: 리스트 메서드'),
+    ('43000000-0000-4000-8000-000000000009', E'A file mode\n해석: 파일 모드'),
+    ('43000000-0000-4000-8000-000000000010', E'0 to 1\n해석: 0부터 1까지'),
+    ('43000000-0000-4000-8000-000000000011', E'10 to 20\n해석: 10부터 20까지'),
+    ('43000000-0000-4000-8000-000000000012', E'Only negative values\n해석: 음수 값만'),
+    ('43000000-0000-4000-8000-000000000013', E'No\n해석: 아니요'),
+    ('43000000-0000-4000-8000-000000000014', E'Always yes\n해석: 항상 예'),
+    ('43000000-0000-4000-8000-000000000015', E'Only in Python\n해석: Python에서만'),
+    ('54000000-0000-4000-8000-000000000001', E'It has correct labels\n해석: 정답 라벨이 있습니다.'),
+    ('54000000-0000-4000-8000-000000000002', E'It has no data\n해석: 데이터가 없습니다.'),
+    ('54000000-0000-4000-8000-000000000003', E'It only changes colors\n해석: 색만 바꿉니다.'),
+    ('54000000-0000-4000-8000-000000000004', E'Patterns without labels\n해석: 라벨 없이 패턴을 찾습니다.'),
+    ('54000000-0000-4000-8000-000000000005', E'Only labeled answers\n해석: 라벨이 있는 정답만'),
+    ('54000000-0000-4000-8000-000000000006', E'Only code length\n해석: 코드 길이만'),
+    ('54000000-0000-4000-8000-000000000007', E'A number\n해석: 숫자'),
+    ('54000000-0000-4000-8000-000000000008', E'A class label only\n해석: 클래스 라벨만'),
+    ('54000000-0000-4000-8000-000000000009', E'A file name only\n해석: 파일 이름만'),
+    ('54000000-0000-4000-8000-000000000010', E'A category\n해석: 범주'),
+    ('54000000-0000-4000-8000-000000000011', E'A continuous price only\n해석: 연속적인 가격 값만'),
+    ('54000000-0000-4000-8000-000000000012', E'A folder path\n해석: 폴더 경로'),
+    ('54000000-0000-4000-8000-000000000013', E'High train score and low test score\n해석: 학습 점수는 높고 테스트 점수는 낮음'),
+    ('54000000-0000-4000-8000-000000000014', E'Perfect generalization\n해석: 완벽한 일반화'),
+    ('54000000-0000-4000-8000-000000000015', E'No training data\n해석: 학습 데이터 없음'),
+    ('54000000-0000-4000-8000-000000000016', E'Accuracy\n해석: 정확도'),
+    ('54000000-0000-4000-8000-000000000017', E'File size\n해석: 파일 크기'),
+    ('54000000-0000-4000-8000-000000000018', E'Screen width\n해석: 화면 너비'),
+    ('54000000-0000-4000-8000-000000000019', E'fit\n해석: 모델 학습 메서드'),
+    ('54000000-0000-4000-8000-000000000020', E'paint\n해석: 칠하다'),
+    ('54000000-0000-4000-8000-000000000021', E'rename\n해석: 이름 바꾸기'),
+    ('55000000-0000-4000-8000-000000000001', E'Project\n해석: 프로젝트'),
+    ('55000000-0000-4000-8000-000000000002', E'Training file\n해석: 학습 파일'),
+    ('55000000-0000-4000-8000-000000000003', E'Model parameter\n해석: 모델 파라미터'),
+    ('55000000-0000-4000-8000-000000000004', E'Service account\n해석: 서비스 계정'),
+    ('55000000-0000-4000-8000-000000000005', E'CSV header\n해석: CSV 헤더'),
+    ('55000000-0000-4000-8000-000000000006', E'Local variable\n해석: 로컬 변수'),
+    ('55000000-0000-4000-8000-000000000007', E'Objects\n해석: 객체'),
+    ('55000000-0000-4000-8000-000000000008', E'Endpoints only\n해석: Endpoint만'),
+    ('55000000-0000-4000-8000-000000000009', E'IAM roles only\n해석: IAM 역할만'),
+    ('55000000-0000-4000-8000-000000000010', E'BigQuery\n해석: BigQuery'),
+    ('55000000-0000-4000-8000-000000000011', E'Cloud Functions\n해석: Cloud Functions'),
+    ('55000000-0000-4000-8000-000000000012', E'IAM\n해석: IAM'),
+    ('55000000-0000-4000-8000-000000000013', E'Compute Engine\n해석: Compute Engine'),
+    ('55000000-0000-4000-8000-000000000014', E'Model Registry\n해석: Model Registry'),
+    ('55000000-0000-4000-8000-000000000015', E'BigQuery ML\n해석: BigQuery ML'),
+    ('55000000-0000-4000-8000-000000000016', E'Cloud Functions\n해석: Cloud Functions'),
+    ('55000000-0000-4000-8000-000000000017', E'Cloud Storage bucket\n해석: Cloud Storage 버킷'),
+    ('55000000-0000-4000-8000-000000000018', E'IAM role\n해석: IAM 역할'),
+    ('55000000-0000-4000-8000-000000000019', E'Vertex AI\n해석: Vertex AI'),
+    ('55000000-0000-4000-8000-000000000020', E'Cloud DNS\n해석: Cloud DNS'),
+    ('55000000-0000-4000-8000-000000000021', E'Cloud Billing\n해석: Cloud Billing'),
+    ('55000000-0000-4000-8000-000000000022', E'AutoML\n해석: AutoML'),
+    ('55000000-0000-4000-8000-000000000023', E'Compute Engine only\n해석: Compute Engine만'),
+    ('55000000-0000-4000-8000-000000000024', E'Cloud Logging\n해석: Cloud Logging'),
+    ('55000000-0000-4000-8000-000000000025', E'Model Registry\n해석: Model Registry'),
+    ('55000000-0000-4000-8000-000000000026', E'Cloud Shell\n해석: Cloud Shell'),
+    ('55000000-0000-4000-8000-000000000027', E'VPC firewall\n해석: VPC 방화벽'),
+    ('55000000-0000-4000-8000-000000000028', E'Endpoint\n해석: 온라인 예측 진입점'),
+    ('55000000-0000-4000-8000-000000000029', E'Dataset\n해석: 데이터셋'),
+    ('55000000-0000-4000-8000-000000000030', E'Bucket\n해석: 버킷'),
+    ('55000000-0000-4000-8000-000000000031', E'Monitoring\n해석: 모니터링'),
+    ('55000000-0000-4000-8000-000000000032', E'Label encoding\n해석: 라벨 인코딩'),
+    ('55000000-0000-4000-8000-000000000033', E'One-hot encoding\n해석: 원-핫 인코딩')
+) as texts(id, option_text)
+where opt.id = texts.id::uuid;
+
+update public.scenario_questions as scenario
+set title = texts.title,
+    scenario = texts.scenario,
+    options = texts.options,
+    explanation = texts.explanation,
+    exam_point = texts.exam_point,
+    practical_point = texts.practical_point
+from (
+  values
+    (
+      '82000000-0000-4000-8000-000000000001',
+      E'Large tabular analytics\n해석: 대규모 표 데이터 분석',
+      E'A team has millions of customer transaction rows and needs SQL analysis plus feature exploration before model training. Which service should they consider first?\n해석: 한 팀이 수백만 건의 고객 거래 행을 가지고 있고, 모델 학습 전에 SQL 분석과 feature exploration이 필요합니다. 가장 먼저 고려할 서비스는 무엇인가요?',
+      jsonb_build_array(E'BigQuery\n해석: BigQuery', E'Cloud Functions\n해석: Cloud Functions', E'Compute Engine only\n해석: Compute Engine만'),
+      E'BigQuery is the best first choice for large tabular SQL analysis and feature exploration.\n해석: BigQuery는 대규모 표 데이터 SQL 분석과 feature exploration에 가장 적합한 첫 선택입니다.',
+      E'Choose the service based on data shape and access pattern.\n해석: 데이터 형태와 접근 패턴을 기준으로 서비스를 고릅니다.',
+      E'Use partitioning and query scope controls to manage cost.\n해석: partitioning과 query 범위 제어로 비용을 관리합니다.'
+    ),
+    (
+      '82000000-0000-4000-8000-000000000002',
+      E'Fast baseline model\n해석: 빠른 baseline 모델',
+      E'A small team has labeled tabular data and wants a fast baseline classifier without writing custom model training code. Which option fits best?\n해석: 작은 팀이 라벨이 있는 표 데이터를 가지고 있고 custom training code 없이 빠른 baseline 분류기를 원합니다. 어떤 선택지가 가장 적합한가요?',
+      jsonb_build_array(E'Vertex AI AutoML\n해석: Vertex AI AutoML', E'Write every algorithm on a VM\n해석: 모든 알고리즘을 VM에서 직접 작성', E'Use Cloud Storage only\n해석: Cloud Storage만 사용'),
+      E'Vertex AI AutoML is appropriate for a fast low-code baseline.\n해석: Vertex AI AutoML은 빠른 low-code baseline에 적합합니다.',
+      E'AutoML is a key low-code solution choice.\n해석: AutoML은 low-code 솔루션 선택지로 중요합니다.',
+      E'After the baseline, compare quality and decide whether custom training is needed.\n해석: baseline 이후 품질을 비교하고 custom training이 필요한지 결정합니다.'
+    ),
+    (
+      '82000000-0000-4000-8000-000000000003',
+      E'Online prediction service\n해석: 온라인 예측 서비스',
+      E'A mobile app needs real-time prediction results from a deployed model. Which Vertex AI resource receives those requests?\n해석: 모바일 앱이 배포된 모델에서 실시간 예측 결과를 받아야 합니다. 어떤 Vertex AI 리소스가 요청을 받나요?',
+      jsonb_build_array(E'Endpoint\n해석: 온라인 예측 진입점', E'Dataset only\n해석: Dataset만', E'Cloud Billing\n해석: Cloud Billing'),
+      E'A Vertex AI endpoint receives online prediction requests for deployed models.\n해석: Vertex AI Endpoint는 배포된 모델의 온라인 예측 요청을 받습니다.',
+      E'Distinguish online prediction from batch prediction.\n해석: online prediction과 batch prediction을 구분합니다.',
+      E'Plan latency, autoscaling, traffic split, and access control.\n해석: 지연시간, autoscaling, traffic split, 접근 제어를 계획합니다.'
+    ),
+    (
+      '82000000-0000-4000-8000-000000000004',
+      E'Deployed model quality change\n해석: 배포된 모델 품질 변화',
+      E'A model has been deployed for two weeks. Input data distribution appears to be changing and prediction quality may be falling. What should be used?\n해석: 모델이 배포된 지 2주가 되었고 입력 데이터 분포가 바뀌며 예측 품질이 떨어질 수 있습니다. 무엇을 사용해야 하나요?',
+      jsonb_build_array(E'Model Monitoring\n해석: 모델 모니터링', E'Rename a bucket\n해석: bucket 이름 변경', E'Delete all IAM roles\n해석: 모든 IAM role 삭제'),
+      E'Model monitoring helps detect drift, skew, and production quality risks.\n해석: Model Monitoring은 drift, skew, 운영 품질 위험을 감지하는 데 도움을 줍니다.',
+      E'Production monitoring is an important PMLE topic.\n해석: 운영 모니터링은 PMLE의 중요한 주제입니다.',
+      E'Define alert rules, review owners, and response processes.\n해석: alert 규칙, 검토 담당자, 대응 절차를 정의합니다.'
+    ),
+    (
+      '82000000-0000-4000-8000-000000000005',
+      E'Least privilege\n해석: 최소 권한',
+      E'A training service account only needs to read training data and start Vertex AI training jobs. Which IAM principle matters most?\n해석: 학습용 service account는 학습 데이터를 읽고 Vertex AI training job을 시작하기만 하면 됩니다. 어떤 IAM 원칙이 가장 중요한가요?',
+      jsonb_build_array(E'Grant only the required roles\n해석: 필요한 role만 부여', E'Give Owner to everyone\n해석: 모두에게 Owner 부여', E'Publish credentials publicly\n해석: 인증 정보를 공개 저장'),
+      E'Least privilege means granting only the permissions needed for the task.\n해석: 최소 권한은 작업에 필요한 권한만 부여하는 원칙입니다.',
+      E'IAM questions often test member, role, resource, and least privilege.\n해석: IAM 문제는 member, role, resource, least privilege를 자주 묻습니다.',
+      E'Separate service account roles and review them regularly.\n해석: service account role을 분리하고 정기적으로 검토합니다.'
+    )
+) as texts(id, title, scenario, options, explanation, exam_point, practical_point)
+where scenario.id = texts.id::uuid;
+
+update public.mock_exam_questions as mockq
+set question = texts.question,
+    scenario = texts.scenario,
+    options = texts.options,
+    explanation = texts.explanation
+from (
+  values
+    (
+      '91000000-0000-4000-8000-000000000001',
+      E'A business team wants a fast baseline image classifier with labeled examples and minimal code. What should be considered first?\n해석: 비즈니스 팀이 라벨이 있는 예시와 최소한의 코드로 빠른 baseline 이미지 분류기를 원합니다. 무엇을 먼저 고려해야 하나요?',
+      E'The team has limited ML engineering support and needs a quick prototype before deciding whether to invest in custom training.\n해석: 팀은 ML 엔지니어링 지원이 제한적이고 custom training 투자 여부를 결정하기 전에 빠른 prototype이 필요합니다.',
+      jsonb_build_array(E'Vertex AI AutoML\n해석: Vertex AI AutoML', E'Compute Engine only\n해석: Compute Engine만', E'Cloud Storage lifecycle rule\n해석: Cloud Storage lifecycle 규칙', E'Cloud DNS\n해석: Cloud DNS'),
+      E'AutoML is a good first choice for fast low-code baselines when labeled data is available.\n해석: 라벨 데이터가 있으면 AutoML은 빠른 low-code baseline을 위한 좋은 첫 선택입니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000002',
+      E'Which service is the best fit for large tabular SQL analytics before feature engineering?\n해석: feature engineering 전에 대규모 표 데이터 SQL 분석에 가장 적합한 서비스는 무엇인가요?',
+      E'A dataset contains millions of customer transaction rows. Analysts need SQL queries and feature exploration.\n해석: 데이터셋에는 수백만 건의 고객 거래 행이 있고, 분석가는 SQL 쿼리와 feature exploration이 필요합니다.',
+      jsonb_build_array(E'BigQuery\n해석: BigQuery', E'Cloud Functions\n해석: Cloud Functions', E'Vertex AI Endpoint\n해석: Vertex AI Endpoint', E'Cloud Monitoring\n해석: Cloud Monitoring'),
+      E'BigQuery is designed for large-scale SQL analytics and is a common feature exploration choice.\n해석: BigQuery는 대규모 SQL 분석용으로 설계되었고 feature exploration에 자주 쓰입니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000003',
+      E'A mobile app needs low-latency online predictions from a deployed model. Which Vertex AI resource should receive requests?\n해석: 모바일 앱이 배포된 모델에서 낮은 지연시간의 온라인 예측을 받아야 합니다. 어떤 Vertex AI 리소스가 요청을 받아야 하나요?',
+      E'The app sends one user event at a time and expects a prediction immediately.\n해석: 앱은 한 번에 하나의 사용자 이벤트를 보내고 즉시 예측을 기대합니다.',
+      jsonb_build_array(E'Endpoint\n해석: 온라인 예측 진입점', E'Dataset\n해석: 데이터셋', E'Model Registry only\n해석: Model Registry만', E'Cloud Billing\n해석: Cloud Billing'),
+      E'Vertex AI endpoints receive online prediction requests for deployed models.\n해석: Vertex AI Endpoint는 배포된 모델의 온라인 예측 요청을 받습니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000004',
+      E'A deployed model starts receiving input data with a distribution different from training data. What should help detect this?\n해석: 배포된 모델이 학습 데이터와 다른 분포의 입력 데이터를 받기 시작했습니다. 이를 감지하는 데 무엇이 도움이 되나요?',
+      E'The operations team suspects production data drift after a marketing campaign changed user behavior.\n해석: 마케팅 캠페인으로 사용자 행동이 바뀐 뒤 운영팀은 production data drift를 의심하고 있습니다.',
+      jsonb_build_array(E'Model monitoring\n해석: 모델 모니터링', E'Bucket rename\n해석: bucket 이름 변경', E'IAM delete all\n해석: 모든 IAM 삭제', E'Region list\n해석: 리전 목록'),
+      E'Model monitoring can track drift, skew, and production quality risks.\n해석: Model Monitoring은 drift, skew, 운영 품질 위험을 추적할 수 있습니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000005',
+      E'What is the safest IAM principle for a training service account?\n해석: 학습용 service account에 가장 안전한 IAM 원칙은 무엇인가요?',
+      E'The service account needs to read one training bucket and start Vertex AI training jobs.\n해석: 이 service account는 하나의 학습 bucket을 읽고 Vertex AI training job을 시작해야 합니다.',
+      jsonb_build_array(E'Grant only required roles\n해석: 필요한 role만 부여', E'Grant Owner to all users\n해석: 모든 사용자에게 Owner 부여', E'Store keys in public code\n해석: 키를 공개 코드에 저장', E'Disable authentication\n해석: 인증 비활성화'),
+      E'Least privilege reduces risk by granting only the permissions required for the workload.\n해석: 최소 권한은 workload에 필요한 권한만 부여해 위험을 줄입니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000006',
+      E'When is custom training more appropriate than AutoML?\n해석: AutoML보다 custom training이 더 적합한 경우는 언제인가요?',
+      E'A team needs a special neural network architecture and custom loss function for research-grade model behavior.\n해석: 팀은 연구 수준의 모델 동작을 위해 특수한 neural network 구조와 custom loss function이 필요합니다.',
+      jsonb_build_array(E'When model architecture control is required\n해석: 모델 아키텍처 제어가 필요할 때', E'When no code should ever be written\n해석: 코드를 절대 작성하면 안 될 때', E'When only DNS routing is needed\n해석: DNS routing만 필요할 때', E'When storing static images only\n해석: 정적 이미지만 저장할 때'),
+      E'Custom training is appropriate when the scenario requires algorithm, architecture, or training-code control.\n해석: 알고리즘, 아키텍처, 학습 코드 제어가 필요하면 custom training이 적합합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000007',
+      E'Which Vertex AI feature helps track model versions and deployment status?\n해석: 모델 버전과 배포 상태 추적에 도움이 되는 Vertex AI 기능은 무엇인가요?',
+      E'The team needs to know which model version is approved, deployed, and available for rollback.\n해석: 팀은 어떤 모델 버전이 승인되었고 배포되었으며 rollback 가능한지 알아야 합니다.',
+      jsonb_build_array(E'Model Registry\n해석: Model Registry', E'Cloud DNS\n해석: Cloud DNS', E'Cloud Storage uniform bucket-level access only\n해석: Cloud Storage uniform bucket-level access만', E'Cloud Shell history\n해석: Cloud Shell 기록'),
+      E'Model Registry supports model version tracking, metadata, deployment state, and governance.\n해석: Model Registry는 모델 버전 추적, 메타데이터, 배포 상태, 거버넌스를 지원합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000008',
+      E'Which deployment technique can gradually move online prediction traffic from an old model to a new model?\n해석: 온라인 예측 트래픽을 기존 모델에서 새 모델로 점진적으로 옮길 수 있는 배포 기법은 무엇인가요?',
+      E'A team wants to reduce risk while validating a new model version in production.\n해석: 팀은 production에서 새 모델 버전을 검증하면서 위험을 줄이고 싶어 합니다.',
+      jsonb_build_array(E'Traffic split on an endpoint\n해석: Endpoint의 traffic split', E'Delete the old model first\n해석: 기존 모델 먼저 삭제', E'Disable logs\n해석: 로그 비활성화', E'Use a billing export only\n해석: billing export만 사용'),
+      E'Traffic splitting lets an endpoint route portions of prediction traffic to different deployed model versions.\n해석: traffic split은 Endpoint가 예측 트래픽 일부를 서로 다른 배포 모델 버전으로 보내게 합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000009',
+      E'A company has tabular data in BigQuery and wants SQL-based model training for a quick baseline. What should be considered?\n해석: 회사가 BigQuery에 표 데이터를 가지고 있고 빠른 baseline을 위해 SQL 기반 모델 학습을 원합니다. 무엇을 고려해야 하나요?',
+      E'The data team is comfortable with SQL but has limited Python ML experience.\n해석: 데이터 팀은 SQL에는 익숙하지만 Python ML 경험은 제한적입니다.',
+      jsonb_build_array(E'BigQuery ML\n해석: BigQuery ML', E'Cloud DNS\n해석: Cloud DNS', E'Cloud Armor only\n해석: Cloud Armor만', E'Manual VM patching\n해석: 수동 VM 패치'),
+      E'BigQuery ML can train models using SQL when the data is already in BigQuery.\n해석: 데이터가 이미 BigQuery에 있으면 BigQuery ML로 SQL을 사용해 모델을 학습할 수 있습니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000010',
+      E'Where are training files and model artifacts often stored for Vertex AI jobs?\n해석: Vertex AI 작업에서 학습 파일과 모델 artifact는 보통 어디에 저장하나요?',
+      E'The workflow reads CSV files and writes exported model artifacts after training.\n해석: 이 workflow는 CSV 파일을 읽고 학습 후 export된 model artifact를 씁니다.',
+      jsonb_build_array(E'Cloud Storage\n해석: Cloud Storage', E'Cloud DNS\n해석: Cloud DNS', E'Endpoint only\n해석: Endpoint만', E'IAM policy only\n해석: IAM policy만'),
+      E'Cloud Storage is object storage commonly used for training data and model artifacts.\n해석: Cloud Storage는 학습 데이터와 모델 artifact에 자주 쓰이는 객체 저장소입니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000011',
+      E'Which prediction pattern is better for scoring a large file of records overnight?\n해석: 대량 파일의 record를 밤새 scoring해야 할 때 더 적합한 예측 방식은 무엇인가요?',
+      E'The business does not need immediate responses. It needs all predictions ready by morning.\n해석: 비즈니스는 즉시 응답이 필요하지 않고 아침까지 모든 예측 결과가 준비되면 됩니다.',
+      jsonb_build_array(E'Batch prediction\n해석: batch prediction', E'Online endpoint request per record only\n해석: record마다 online endpoint 요청만 사용', E'Disable prediction\n해석: 예측 비활성화', E'Use Cloud DNS\n해석: Cloud DNS 사용'),
+      E'Batch prediction is appropriate for asynchronous large-volume scoring when low-latency response is not required.\n해석: 낮은 지연시간 응답이 필요 없고 대량 scoring을 비동기로 처리할 때 batch prediction이 적합합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000012',
+      E'Which question should be answered before choosing an ML service?\n해석: ML 서비스를 선택하기 전에 먼저 답해야 할 질문은 무엇인가요?',
+      E'A stakeholder asks for AI but has not described the data, target, latency, or business outcome.\n해석: 이해관계자가 AI를 요청했지만 데이터, 목표, 지연시간, 비즈니스 결과를 설명하지 않았습니다.',
+      jsonb_build_array(E'What business problem and data type are involved?\n해석: 어떤 비즈니스 문제와 데이터 유형이 관련되어 있나요?', E'Which logo color is used?\n해석: 어떤 로고 색을 사용하나요?', E'How many DNS records exist?\n해석: DNS record가 몇 개인가요?', E'Can all permissions be public?\n해석: 모든 권한을 공개해도 되나요?'),
+      E'Service choice starts with the problem, data type, target, latency, security, and operations requirements.\n해석: 서비스 선택은 문제, 데이터 유형, 목표, 지연시간, 보안, 운영 요구사항에서 시작합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000013',
+      E'Why is model lineage useful in production ML?\n해석: production ML에서 model lineage가 유용한 이유는 무엇인가요?',
+      E'An incident happens and the team must identify the model version, training data, and deployment path.\n해석: 장애가 발생했고 팀은 모델 버전, 학습 데이터, 배포 경로를 확인해야 합니다.',
+      jsonb_build_array(E'It supports traceability and rollback\n해석: 추적성과 rollback을 지원합니다.', E'It removes the need for monitoring\n해석: 모니터링 필요성을 없앱니다.', E'It makes all data public\n해석: 모든 데이터를 공개합니다.', E'It replaces IAM\n해석: IAM을 대체합니다.'),
+      E'Lineage helps teams trace model versions, data, decisions, and rollback paths.\n해석: lineage는 모델 버전, 데이터, 의사결정, rollback 경로를 추적하는 데 도움을 줍니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000014',
+      E'A production model has increasing latency and error rate. What should the team review first?\n해석: production 모델의 지연시간과 오류율이 증가하고 있습니다. 팀은 무엇을 먼저 검토해야 하나요?',
+      E'Customers report slow predictions after traffic increases during a promotion.\n해석: 프로모션 중 트래픽이 증가한 뒤 고객들이 느린 예측을 보고합니다.',
+      jsonb_build_array(E'Endpoint metrics, autoscaling, and logs\n해석: Endpoint metrics, autoscaling, logs', E'Only the bucket name\n해석: bucket 이름만', E'Only DNS comments\n해석: DNS comment만', E'Ignore monitoring until next month\n해석: 다음 달까지 모니터링 무시'),
+      E'Operational metrics and logs help diagnose serving health, latency, errors, and scaling issues.\n해석: 운영 metrics와 logs는 serving 상태, 지연시간, 오류, scaling 문제를 진단하는 데 도움을 줍니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000015',
+      E'What should be considered when choosing the region for data and training?\n해석: 데이터와 학습 리전을 선택할 때 무엇을 고려해야 하나요?',
+      E'The organization has compliance requirements and users in a specific geographic area.\n해석: 조직에는 규정 준수 요구사항이 있고 사용자는 특정 지리적 지역에 있습니다.',
+      jsonb_build_array(E'Latency, compliance, cost, and data location\n해석: 지연시간, 규정 준수, 비용, 데이터 위치', E'Only the project name length\n해석: 프로젝트 이름 길이만', E'Only UI color\n해석: UI 색상만', E'Whether the model name is short\n해석: 모델 이름이 짧은지 여부'),
+      E'Region choice affects latency, compliance, cost, availability, and data residency.\n해석: 리전 선택은 지연시간, 규정 준수, 비용, 가용성, 데이터 위치 요건에 영향을 줍니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000016',
+      E'Which option best describes Cloud Functions in an ML workflow?\n해석: ML workflow에서 Cloud Functions를 가장 잘 설명하는 선택지는 무엇인가요?',
+      E'A file upload should trigger a small notification and metadata update.\n해석: 파일 업로드가 작은 알림과 메타데이터 업데이트를 트리거해야 합니다.',
+      jsonb_build_array(E'Small event-driven automation\n해석: 작은 이벤트 기반 자동화', E'Full long-running GPU training\n해석: 긴 GPU 학습 전체', E'Model version registry\n해석: 모델 버전 registry', E'Online prediction endpoint\n해석: 온라인 예측 endpoint'),
+      E'Cloud Functions is useful for small event-driven tasks, not long-running model training.\n해석: Cloud Functions는 긴 모델 학습이 아니라 작은 이벤트 기반 작업에 유용합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000017',
+      E'When might Compute Engine be chosen in an ML scenario?\n해석: ML 시나리오에서 Compute Engine을 선택할 수 있는 경우는 언제인가요?',
+      E'A team needs direct VM control, a special GPU setup, and a custom runtime environment.\n해석: 팀은 직접적인 VM 제어, 특수 GPU 설정, custom runtime 환경이 필요합니다.',
+      jsonb_build_array(E'When direct VM and environment control is required\n해석: 직접적인 VM과 환경 제어가 필요할 때', E'When only no-code training is allowed\n해석: no-code training만 허용될 때', E'When only SQL analytics is needed\n해석: SQL 분석만 필요할 때', E'When model drift must be monitored\n해석: model drift를 모니터링해야 할 때'),
+      E'Compute Engine gives VM-level control but adds operational responsibility.\n해석: Compute Engine은 VM 수준 제어를 제공하지만 운영 책임도 증가합니다.'
+    ),
+    (
+      '91000000-0000-4000-8000-000000000018',
+      E'Which result suggests the model should be reviewed after deployment?\n해석: 배포 후 모델을 검토해야 함을 보여 주는 결과는 무엇인가요?',
+      E'Monitoring shows that prediction input distribution is shifting and accuracy proxy metrics are declining.\n해석: Monitoring에서 예측 입력 분포가 바뀌고 accuracy proxy metric이 하락하고 있습니다.',
+      jsonb_build_array(E'Data drift and quality degradation\n해석: 데이터 drift와 품질 저하', E'A new bucket label only\n해석: 새 bucket label만', E'A shorter project name\n해석: 더 짧은 프로젝트 이름', E'A disabled dashboard theme\n해석: 비활성화된 dashboard theme'),
+      E'Drift and quality degradation indicate that production model behavior should be reviewed.\n해석: drift와 품질 저하는 production 모델 동작을 검토해야 한다는 신호입니다.'
+    )
+) as texts(id, question, scenario, options, explanation)
+where mockq.id = texts.id::uuid;

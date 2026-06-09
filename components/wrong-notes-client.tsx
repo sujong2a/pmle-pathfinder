@@ -156,7 +156,7 @@ export function WrongNotesClient() {
                         {note.resolved ? <CheckCircle2 size={14} /> : <CircleAlert size={14} />}
                         {note.resolved ? "해결됨" : "다시 풀기 필요"}
                       </div>
-                      <h3 className="mt-3 text-lg font-black">{note.question_snapshot}</h3>
+                      <h3 className="mt-3 whitespace-pre-wrap text-lg font-black leading-7">{note.question_snapshot}</h3>
                       <p className="mt-1 text-sm font-semibold text-slate-500">{lesson?.title ?? "단원 정보 없음"}</p>
                     </div>
                     {lesson && (
@@ -202,7 +202,7 @@ function AnswerBox({ label, value, tone }: { label: string; value: string; tone:
   return (
     <div className={clsx("rounded-md border p-4", tone === "wrong" ? "border-red-200 bg-red-50" : "border-emerald-200 bg-emerald-50")}>
       <p className="text-xs font-black text-slate-600">{label}</p>
-      <p className={clsx("mt-2 text-sm font-bold leading-6", tone === "wrong" ? "text-danger" : "text-emerald-800")}>{value}</p>
+      <p className={clsx("mt-2 whitespace-pre-wrap text-sm font-bold leading-6", tone === "wrong" ? "text-danger" : "text-emerald-800")}>{value}</p>
     </div>
   );
 }

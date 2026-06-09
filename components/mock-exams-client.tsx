@@ -470,7 +470,7 @@ function ExamMode({
 
         <div className="mt-5 rounded-md bg-slate-50 p-4">
           <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">{currentQuestion.domain_title}</p>
-          <h3 className="mt-2 text-lg font-black">{currentQuestion.question}</h3>
+          <h3 className="mt-2 whitespace-pre-wrap text-lg font-black leading-7">{currentQuestion.question}</h3>
           {currentQuestion.scenario && <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-700">{currentQuestion.scenario}</p>}
         </div>
 
@@ -482,7 +482,7 @@ function ExamMode({
                 key={option}
                 onClick={() => onSelectAnswer(currentQuestion.id, index)}
                 className={clsx(
-                  "min-h-12 rounded-md border px-4 py-3 text-left text-sm font-semibold transition",
+                  "min-h-12 whitespace-pre-wrap rounded-md border px-4 py-3 text-left text-sm font-semibold leading-6 transition",
                   selected ? "border-brand bg-blue-50 text-ink" : "border-line bg-white hover:border-brand"
                 )}
               >
@@ -620,8 +620,8 @@ function AnalysisMode({
                 <div className="inline-flex items-center gap-2 rounded-full bg-red-50 px-2 py-1 text-xs font-black text-danger">
                   <XCircle size={14} /> {answer.domain_title}
                 </div>
-                <h3 className="mt-3 font-black">{answer.question_snapshot}</h3>
-                {answer.scenario_snapshot && <p className="mt-2 text-sm leading-6 text-slate-600">{answer.scenario_snapshot}</p>}
+                <h3 className="mt-3 whitespace-pre-wrap font-black leading-7">{answer.question_snapshot}</h3>
+                {answer.scenario_snapshot && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{answer.scenario_snapshot}</p>}
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                   <AnswerBox label="내 답변" value={selected} tone="wrong" />
                   <AnswerBox label="정답" value={correct} tone="correct" />
@@ -662,7 +662,7 @@ function AnswerBox({ label, value, tone }: { label: string; value: string; tone:
   return (
     <div className={clsx("rounded-md border p-4", tone === "wrong" ? "border-red-200 bg-red-50" : "border-emerald-200 bg-emerald-50")}>
       <p className="text-xs font-black text-slate-600">{label}</p>
-      <p className={clsx("mt-2 text-sm font-bold leading-6", tone === "wrong" ? "text-danger" : "text-emerald-800")}>{value}</p>
+      <p className={clsx("mt-2 whitespace-pre-wrap text-sm font-bold leading-6", tone === "wrong" ? "text-danger" : "text-emerald-800")}>{value}</p>
     </div>
   );
 }

@@ -211,7 +211,7 @@ export function GcpDashboardClient() {
                   <article key={question.id} className="rounded-md border border-line p-4">
                     <p className="text-xs font-black text-brand">{lesson?.title ?? "GCP 시나리오"}</p>
                     <h3 className="mt-1 font-black">{question.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{question.scenario}</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{question.scenario}</p>
                     <div className="mt-3 grid gap-2">
                       {question.options.map((option, index) => {
                         const selected = result?.selectedIndex === index;
@@ -222,7 +222,7 @@ export function GcpDashboardClient() {
                             key={option}
                             onClick={() => answerScenario(question, index)}
                             className={clsx(
-                              "rounded-md border px-3 py-2 text-left text-sm font-semibold",
+                              "whitespace-pre-wrap rounded-md border px-3 py-2 text-left text-sm font-semibold leading-6",
                               !result && "border-line hover:border-brand",
                               correct && "border-emerald-400 bg-emerald-50 text-emerald-800",
                               wrong && "border-danger bg-red-50 text-danger",
