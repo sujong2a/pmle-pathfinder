@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>자산 적립식 투자 시뮬레이터</title>
+    <script>
+      window.tailwind = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: [
+                "Inter",
+                "Pretendard",
+                "Apple SD Gothic Neo",
+                "Noto Sans KR",
+                "system-ui",
+                "sans-serif",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --normal-color: #0f766e;
+        --retirement-color: #d97706;
+        --total-color: #2563eb;
+        --ink: #111827;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background:
+          linear-gradient(180deg, rgba(15, 118, 110, 0.06), transparent 280px),
+          #f7f8fb;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        height: 0.45rem;
+        appearance: none;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #e5e7eb, #eef2f7);
+        outline: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        width: 1.05rem;
+        height: 1.05rem;
+        appearance: none;
+        cursor: pointer;
+        border: 3px solid #ffffff;
+        border-radius: 999px;
+        background: var(--thumb-color, var(--total-color));
+        box-shadow: 0 8px 20px rgba(17, 24, 39, 0.18);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 1.05rem;
+        height: 1.05rem;
+        cursor: pointer;
+        border: 3px solid #ffffff;
+        border-radius: 999px;
+        background: var(--thumb-color, var(--total-color));
+        box-shadow: 0 8px 20px rgba(17, 24, 39, 0.18);
+      }
+
+      .control-range[data-tone="normal"] input[type="range"] {
+        --thumb-color: var(--normal-color);
+      }
+
+      .control-range[data-tone="retirement"] input[type="range"] {
+        --thumb-color: var(--retirement-color);
+      }
+
+      .control-range[data-tone="time"] input[type="range"] {
+        --thumb-color: var(--total-color);
+      }
+
+      .number-input {
+        -moz-appearance: textfield;
+      }
+
+      .number-input::-webkit-outer-spin-button,
+      .number-input::-webkit-inner-spin-button {
+        margin: 0;
+        appearance: none;
+      }
+
+      .currency-value {
+        overflow-wrap: anywhere;
+        line-height: 1.15;
+      }
+
+      .asset-disabled .control-range {
+        opacity: 0.45;
+      }
+
+      .asset-disabled .control-range input {
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen font-sans text-slate-900">
+    <main class="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+      <header class="flex flex-col gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-semibold text-teal-700">연 단위 복리 대시보드</p>
+          <h1 class="mt-1 text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
+            자산 적립식 투자 시뮬레이터
+          </h1>
+        </div>
+        <div
+          id="scenarioBadge"
+          class="w-fit rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
+        >
+          30년 시뮬레이션 / 20년차 퇴직
+        </div>
+      </header>
+
+      <div class="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
+        <aside class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-5 lg:self-start">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-bold text-slate-950">입력 설정</h2>
+            <span class="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">실시간</span>
+          </div>
+
+          <section class="mt-4 space-y-4 border-t border-slate-200 pt-4">
+            <h3 class="text-sm font-bold text-slate-700">기간 설정</h3>
+
+            <div class="control-range" data-tone="time">
+              <div class="flex items-center justify-between gap-3">
+                <label for="totalYearsRange" class="text-sm font-semibold text-slate-700">적립 및 시뮬레이션 기간</label>
+                <span id="totalYearsPreview" class="text-sm font-bold text-blue-700">30년</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="totalYearsRange" type="range" min="1" max="60" step="1" value="30" />
+                <input
+                  id="totalYearsNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring-4"
+                  type="number"
+                  min="1"
+                  max="60"
+                  step="1"
+                  value="30"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="time">
+              <div class="flex items-center justify-between gap-3">
+                <label for="retireYearRange" class="text-sm font-semibold text-slate-700">퇴직 시기</label>
+                <span id="retireYearPreview" class="text-sm font-bold text-blue-700">20년차</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="retireYearRange" type="range" min="1" max="30" step="1" value="20" />
+                <input
+                  id="retireYearNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-blue-200 transition focus:border-blue-500 focus:ring-4"
+                  type="number"
+                  min="1"
+                  max="30"
+                  step="1"
+                  value="20"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section id="normalAssetSection" class="mt-5 space-y-4 border-t border-slate-200 pt-4">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-sm bg-teal-700"></span>
+                <h3 class="text-sm font-bold text-slate-700">일반 자산 설정</h3>
+              </div>
+              <label class="inline-flex cursor-pointer items-center gap-2 rounded-md border border-teal-100 bg-teal-50 px-2.5 py-1.5 text-xs font-bold text-teal-700">
+                <span id="normalEnabledText">ON</span>
+                <input id="normalEnabled" type="checkbox" class="peer sr-only" checked />
+                <span
+                  class="relative h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-teal-700 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-sm after:transition peer-checked:after:translate-x-4"
+                ></span>
+              </label>
+            </div>
+
+            <div class="control-range" data-tone="normal">
+              <div class="flex items-center justify-between gap-3">
+                <label for="normalMonthlyRange" class="text-sm font-semibold text-slate-700">매월 적립액</label>
+                <span id="normalMonthlyPreview" class="text-sm font-bold text-teal-700">₩1,000,000</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_124px] items-center gap-3">
+                <input id="normalMonthlyRange" type="range" min="0" max="10000000" step="50000" value="1000000" />
+                <input
+                  id="normalMonthlyNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-teal-200 transition focus:border-teal-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="10000000"
+                  step="50000"
+                  value="1000000"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="normal">
+              <div class="flex items-center justify-between gap-3">
+                <label for="normalMonthlyIncreaseRange" class="text-sm font-semibold text-slate-700">
+                  연봉 상승에 따른 월 적립 증가액
+                </label>
+                <span id="normalMonthlyIncreasePreview" class="text-sm font-bold text-teal-700">₩0</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_124px] items-center gap-3">
+                <input
+                  id="normalMonthlyIncreaseRange"
+                  type="range"
+                  min="0"
+                  max="5000000"
+                  step="10000"
+                  value="0"
+                />
+                <input
+                  id="normalMonthlyIncreaseNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-teal-200 transition focus:border-teal-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="5000000"
+                  step="10000"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="normal">
+              <div class="flex items-center justify-between gap-3">
+                <label for="normalPreRateRange" class="text-sm font-semibold text-slate-700">퇴직 전 연 성장률</label>
+                <span id="normalPreRatePreview" class="text-sm font-bold text-teal-700">7%</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="normalPreRateRange" type="range" min="0" max="60" step="1" value="7" />
+                <input
+                  id="normalPreRateNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-teal-200 transition focus:border-teal-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value="7"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="normal">
+              <div class="flex items-center justify-between gap-3">
+                <label for="normalPostRateRange" class="text-sm font-semibold text-slate-700">퇴직 후 연 성장률</label>
+                <span id="normalPostRatePreview" class="text-sm font-bold text-teal-700">4%</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="normalPostRateRange" type="range" min="0" max="60" step="1" value="4" />
+                <input
+                  id="normalPostRateNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-teal-200 transition focus:border-teal-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value="4"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section id="retirementAssetSection" class="mt-5 space-y-4 border-t border-slate-200 pt-4">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="h-3 w-3 rounded-sm bg-amber-600"></span>
+                <h3 class="text-sm font-bold text-slate-700">퇴직금 설정</h3>
+              </div>
+              <label class="inline-flex cursor-pointer items-center gap-2 rounded-md border border-amber-100 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-700">
+                <span id="retirementEnabledText">ON</span>
+                <input id="retirementEnabled" type="checkbox" class="peer sr-only" checked />
+                <span
+                  class="relative h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-amber-600 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:shadow-sm after:transition peer-checked:after:translate-x-4"
+                ></span>
+              </label>
+            </div>
+
+            <div class="control-range" data-tone="retirement">
+              <div class="flex items-center justify-between gap-3">
+                <label for="retirementMonthlyRange" class="text-sm font-semibold text-slate-700">매월 적립액</label>
+                <span id="retirementMonthlyPreview" class="text-sm font-bold text-amber-700">₩500,000</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_124px] items-center gap-3">
+                <input id="retirementMonthlyRange" type="range" min="0" max="5000000" step="10000" value="500000" />
+                <input
+                  id="retirementMonthlyNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-amber-200 transition focus:border-amber-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="5000000"
+                  step="10000"
+                  value="500000"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="retirement">
+              <div class="flex items-center justify-between gap-3">
+                <label for="retirementMonthlyIncreaseRange" class="text-sm font-semibold text-slate-700">
+                  연봉 상승에 따른 퇴직금 적립 증가액
+                </label>
+                <span id="retirementMonthlyIncreasePreview" class="text-sm font-bold text-amber-700">₩0</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_124px] items-center gap-3">
+                <input
+                  id="retirementMonthlyIncreaseRange"
+                  type="range"
+                  min="0"
+                  max="1000000"
+                  step="10000"
+                  value="0"
+                />
+                <input
+                  id="retirementMonthlyIncreaseNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-amber-200 transition focus:border-amber-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="1000000"
+                  step="10000"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="retirement">
+              <div class="flex items-center justify-between gap-3">
+                <label for="retirementPreRateRange" class="text-sm font-semibold text-slate-700">퇴직 전 연 성장률</label>
+                <span id="retirementPreRatePreview" class="text-sm font-bold text-amber-700">5%</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="retirementPreRateRange" type="range" min="0" max="60" step="1" value="5" />
+                <input
+                  id="retirementPreRateNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-amber-200 transition focus:border-amber-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value="5"
+                />
+              </div>
+            </div>
+
+            <div class="control-range" data-tone="retirement">
+              <div class="flex items-center justify-between gap-3">
+                <label for="retirementPostRateRange" class="text-sm font-semibold text-slate-700">퇴직 후 연 성장률</label>
+                <span id="retirementPostRatePreview" class="text-sm font-bold text-amber-700">3%</span>
+              </div>
+              <div class="mt-2 grid grid-cols-[minmax(0,1fr)_104px] items-center gap-3">
+                <input id="retirementPostRateRange" type="range" min="0" max="60" step="1" value="3" />
+                <input
+                  id="retirementPostRateNumber"
+                  class="number-input rounded-md border border-slate-300 bg-white px-2.5 py-2 text-right text-sm font-semibold text-slate-900 outline-none ring-amber-200 transition focus:border-amber-600 focus:ring-4"
+                  type="number"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value="3"
+                />
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="min-w-0 space-y-4">
+          <div class="grid gap-3 md:grid-cols-3">
+            <article class="rounded-lg border border-teal-100 bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-sm font-bold text-slate-600">최종 일반 자산</p>
+                <span class="h-2.5 w-2.5 rounded-sm bg-teal-700"></span>
+              </div>
+              <p id="finalNormal" class="currency-value mt-3 text-[clamp(1.2rem,2.1vw,1.85rem)] font-extrabold text-teal-700">
+                ₩0
+              </p>
+              <p id="finalNormalYear" class="mt-2 text-xs font-semibold text-slate-500">투자 30년차 기준</p>
+              <div class="mt-3 border-t border-teal-100 pt-3">
+                <p class="text-xs font-semibold text-slate-500">퇴직 시점 일반 자산</p>
+                <p id="retirementPointNormal" class="currency-value mt-1 text-base font-extrabold text-teal-700">
+                  ₩0
+                </p>
+                <p id="retirementPointNormalYear" class="mt-1 text-xs font-semibold text-slate-500">퇴직 20년차 기준</p>
+              </div>
+            </article>
+
+            <article class="rounded-lg border border-amber-100 bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-sm font-bold text-slate-600">최종 퇴직금</p>
+                <span class="h-2.5 w-2.5 rounded-sm bg-amber-600"></span>
+              </div>
+              <p
+                id="finalRetirement"
+                class="currency-value mt-3 text-[clamp(1.2rem,2.1vw,1.85rem)] font-extrabold text-amber-700"
+              >
+                ₩0
+              </p>
+              <p id="finalRetirementYear" class="mt-2 text-xs font-semibold text-slate-500">투자 30년차 기준</p>
+              <div class="mt-3 border-t border-amber-100 pt-3">
+                <p class="text-xs font-semibold text-slate-500">퇴직 시점 퇴직금</p>
+                <p id="retirementPointRetirement" class="currency-value mt-1 text-base font-extrabold text-amber-700">
+                  ₩0
+                </p>
+                <p id="retirementPointRetirementYear" class="mt-1 text-xs font-semibold text-slate-500">퇴직 20년차 기준</p>
+              </div>
+            </article>
+
+            <article class="rounded-lg border border-blue-100 bg-white p-4 shadow-sm">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-sm font-bold text-slate-600">최종 합산 자산</p>
+                <span class="h-2.5 w-2.5 rounded-sm bg-blue-600"></span>
+              </div>
+              <p id="finalTotal" class="currency-value mt-3 text-[clamp(1.2rem,2.1vw,1.85rem)] font-extrabold text-blue-700">
+                ₩0
+              </p>
+              <p id="finalTotalYear" class="mt-2 text-xs font-semibold text-slate-500">투자 30년차 기준</p>
+              <div class="mt-3 border-t border-blue-100 pt-3">
+                <p class="text-xs font-semibold text-slate-500">퇴직 시점 합산 자산</p>
+                <p id="retirementPointTotal" class="currency-value mt-1 text-base font-extrabold text-blue-700">₩0</p>
+                <p id="retirementPointYear" class="mt-1 text-xs font-semibold text-slate-500">퇴직 20년차 기준</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex flex-col gap-2 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-slate-950">자산 성장 곡선</h2>
+                <p id="phaseText" class="mt-1 text-sm font-semibold text-slate-500">적립기 20년 / 거치기 10년</p>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs font-bold text-slate-600">
+                <span class="inline-flex items-center gap-1.5 rounded-md bg-teal-50 px-2.5 py-1 text-teal-700">
+                  <span class="h-2 w-2 rounded-sm bg-teal-700"></span>일반 자산
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1 text-amber-700">
+                  <span class="h-2 w-2 rounded-sm bg-amber-600"></span>퇴직금
+                </span>
+                <span class="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 text-blue-700">
+                  <span class="h-2 w-2 rounded-sm bg-blue-600"></span>합산
+                </span>
+              </div>
+            </div>
+            <div class="h-[420px] pt-4 sm:h-[520px]">
+              <canvas id="assetChart" aria-label="자산 성장 차트"></canvas>
+            </div>
+            <div class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div class="flex items-center gap-3">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-900 text-white">
+                  <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M12 3v18"></path>
+                    <path d="M5 8h14"></path>
+                    <path d="M7 16h10"></path>
+                  </svg>
+                </span>
+                <div>
+                  <h3 class="text-base font-extrabold text-slate-900">입력 설정 가이드</h3>
+                  <p class="mt-1 text-sm font-semibold text-slate-500">자산 설계 시작하기</p>
+                </div>
+              </div>
+
+              <div class="mt-4 grid gap-3 xl:grid-cols-2">
+                <section class="rounded-lg border border-slate-200 bg-white p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-700">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 7v5l3 2"></path>
+                      </svg>
+                    </span>
+                    <div>
+                      <h4 class="font-extrabold text-slate-900">1. 기간 및 퇴직 설정</h4>
+                      <p class="mt-1 text-sm font-semibold text-blue-700">시간의 힘 활용하기</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-3 text-sm font-semibold leading-6 text-slate-600">
+                    <p><strong class="text-slate-900">적립 및 시뮬레이션 기간</strong>: 앞으로 총 몇 년 동안 자산을 관찰하고 굴릴지 정하는 전체 시간입니다. 기간이 길어질수록 뒤로 갈수록 돈이 불어나는 속도가 더 빨라집니다.</p>
+                    <p><strong class="text-slate-900">퇴직 시기</strong>: 언제까지 내 돈을 넣을지 정하는 기준점입니다. 이 시기가 지나면 매달 새로 들어가는 저축액은 0원이 되고, 그때까지 모인 돈만 스스로 굴러가기 시작합니다.</p>
+                  </div>
+                </section>
+
+                <section class="rounded-lg border border-teal-100 bg-white p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-700">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M4 19V5"></path>
+                        <path d="M4 19h16"></path>
+                        <path d="m7 15 4-4 3 3 5-7"></path>
+                      </svg>
+                    </span>
+                    <div>
+                      <h4 class="font-extrabold text-slate-900">2. 일반 자산 설정</h4>
+                      <p class="mt-1 text-sm font-semibold text-teal-700">나의 주력 투자 자산</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-3 text-sm font-semibold leading-6 text-slate-600">
+                    <p><strong class="text-slate-900">매월 적립액</strong>: 매달 주식, 펀드, 예적금 등에 저축할 금액입니다. 미래 자산의 기초 체력, 즉 종잣돈을 다지는 역할을 합니다.</p>
+                    <p><strong class="text-slate-900">연봉 상승에 따른 월 적립 증가액</strong>: 소득이 늘어날 것을 감안해 저축 금액을 매년 조금씩 늘려 잡는 기능입니다. 0원으로 두면 매달 같은 금액만 저축합니다.</p>
+                    <p><strong class="text-slate-900">퇴직 전 연 성장률</strong>: 퇴직 전까지 적극적으로 자산을 굴릴 때 기대하는 연평균 수익률입니다. 예를 들어 미국 S&P500 지수 투자는 대략 9-12%를 기대치로 보기도 합니다.</p>
+                    <p><strong class="text-slate-900">퇴직 후 연 성장률</strong>: 은퇴 이후 늘어난 자산을 지키면서 운용할 때의 수익률입니다. 은퇴 후에는 보통 더 보수적으로 운용하므로 퇴직 전보다 낮게 잡는 것이 현실적입니다.</p>
+                  </div>
+                </section>
+
+                <section class="rounded-lg border border-amber-100 bg-white p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-700">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M6 7h12v14H6z"></path>
+                        <path d="M9 7V5a3 3 0 0 1 6 0v2"></path>
+                        <path d="M9 13h6"></path>
+                      </svg>
+                    </span>
+                    <div>
+                      <h4 class="font-extrabold text-slate-900">3. 퇴직금 설정</h4>
+                      <p class="mt-1 text-sm font-semibold text-amber-700">은퇴 보장 자산</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-3 text-sm font-semibold leading-6 text-slate-600">
+                    <p><strong class="text-slate-900">매월 적립액</strong>: 회사가 나를 위해 쌓아주거나, 내가 퇴직 연금 계좌에 별도로 모으는 금액입니다. 일반 자산과 섞이지 않고 독립적으로 계산됩니다.</p>
+                    <p><strong class="text-slate-900">연봉 상승에 따른 퇴직금 적립 증가액</strong>: 직급과 연봉이 오르면 회사가 적립해 주는 퇴직금 규모도 커질 수 있습니다. 이를 반영해 퇴직금 저축액을 매년 늘려 잡는 기능입니다.</p>
+                    <p><strong class="text-slate-900">퇴직 전/후 연 성장률</strong>: 퇴직금 계좌를 어떤 상품으로 굴릴지에 따른 수익률입니다. 퇴직 시점 이후에는 추가 적립 없이 설정한 퇴직 후 성장률로만 만기까지 복리 성장합니다.</p>
+                  </div>
+                </section>
+
+                <section class="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                  <div class="flex items-start gap-3">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+                      <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M12 3v3"></path>
+                        <path d="M12 18v3"></path>
+                        <path d="M5.6 5.6 7.7 7.7"></path>
+                        <path d="M16.3 16.3 18.4 18.4"></path>
+                        <path d="M3 12h3"></path>
+                        <path d="M18 12h3"></path>
+                        <circle cx="12" cy="12" r="4"></circle>
+                      </svg>
+                    </span>
+                    <div>
+                      <h4 class="font-extrabold text-slate-900">핵심 요약</h4>
+                      <p class="mt-1 text-sm font-semibold text-blue-700">이것만 기억하세요</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-3 text-sm font-bold leading-6 text-slate-700">
+                    <p>적립액은 초반 자산의 크기를 결정하고, 성장률은 후반 자산이 치솟는 각도를 결정합니다.</p>
+                    <p>퇴직 시기 이후에는 퇴직 후 연 성장률이 매우 중요합니다. 은퇴 후에도 자산을 그냥 두지 않고 연 3-4%라도 안정적으로 굴리는 것이 큰 차이를 만듭니다.</p>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      // 모든 컨트롤의 제약 조건을 한 곳에서 관리한다.
+      // range input, number input, 계산 상태가 같은 값을 바라보도록 이 설정을 기준으로 동기화한다.
+      const controlConfigs = {
+        totalYears: {
+          min: 1,
+          max: 60,
+          step: 1,
+          value: 30,
+          unit: "year",
+        },
+        retireYear: {
+          min: 1,
+          max: 30,
+          step: 1,
+          value: 20,
+          unit: "retireYear",
+        },
+        normalMonthly: {
+          min: 0,
+          max: 10000000,
+          step: 50000,
+          value: 1000000,
+          unit: "currency",
+        },
+        normalMonthlyIncrease: {
+          min: 0,
+          max: 5000000,
+          step: 10000,
+          value: 0,
+          unit: "currency",
+        },
+        normalPreRate: {
+          min: 0,
+          max: 60,
+          step: 1,
+          value: 7,
+          unit: "percent",
+        },
+        normalPostRate: {
+          min: 0,
+          max: 60,
+          step: 1,
+          value: 4,
+          unit: "percent",
+        },
+        retirementMonthly: {
+          min: 0,
+          max: 5000000,
+          step: 10000,
+          value: 500000,
+          unit: "currency",
+        },
+        retirementMonthlyIncrease: {
+          min: 0,
+          max: 1000000,
+          step: 10000,
+          value: 0,
+          unit: "currency",
+        },
+        retirementPreRate: {
+          min: 0,
+          max: 60,
+          step: 1,
+          value: 5,
+          unit: "percent",
+        },
+        retirementPostRate: {
+          min: 0,
+          max: 60,
+          step: 1,
+          value: 3,
+          unit: "percent",
+        },
+      };
+
+      const state = {
+        ...Object.fromEntries(Object.entries(controlConfigs).map(([key, config]) => [key, config.value])),
+        normalEnabled: true,
+        retirementEnabled: true,
+      };
+      const controlElements = {};
+      const assetControlKeys = {
+        normal: ["normalMonthly", "normalMonthlyIncrease", "normalPreRate", "normalPostRate"],
+        retirement: ["retirementMonthly", "retirementMonthlyIncrease", "retirementPreRate", "retirementPostRate"],
+      };
+      const currencyFormatter = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 });
+
+      const chartColors = {
+        normal: "#0f766e",
+        retirement: "#d97706",
+        total: "#2563eb",
+        grid: "rgba(148, 163, 184, 0.22)",
+        text: "#475569",
+      };
+
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+      function roundToStep(value, min, step) {
+        // min을 기준점으로 두고 step에 맞춰 반올림해야 50,000원 단위 같은 입력도 정확히 맞는다.
+        return Math.round((value - min) / step) * step + min;
+      }
+
+      function formatCurrency(value) {
+        // 툴팁과 요약 카드에는 요구사항대로 천 단위 콤마가 포함된 원화 표기를 사용한다.
+        return `₩${currencyFormatter.format(Math.round(value))}`;
+      }
+
+      function formatAxisCurrency(value) {
+        // 축 라벨은 공간이 좁기 때문에 한국식 단위로 축약하고, 툴팁에는 전체 금액을 보여준다.
+        const abs = Math.abs(value);
+        if (abs >= 10000000000000000) return `₩${(value / 10000000000000000).toFixed(1)}경`;
+        if (abs >= 1000000000000) return `₩${(value / 1000000000000).toFixed(1)}조`;
+        if (abs >= 100000000) return `₩${(value / 100000000).toFixed(1)}억`;
+        if (abs >= 10000) return `₩${Math.round(value / 10000).toLocaleString("ko-KR")}만`;
+        return formatCurrency(value);
+      }
+
+      function formatPreview(key, value) {
+        const unit = controlConfigs[key].unit;
+        if (unit === "currency") return formatCurrency(value);
+        if (unit === "percent") return `${Math.round(value)}%`;
+        if (unit === "retireYear") return `${Math.round(value)}년차`;
+        return `${Math.round(value)}년`;
+      }
+
+      function normalizeValue(key, rawValue, snapToStep) {
+        const config = controlConfigs[key];
+        const parsed = Number(rawValue);
+        let nextValue = Number.isFinite(parsed) ? parsed : config.min;
+
+        nextValue = clamp(nextValue, config.min, config.max);
+
+        if (snapToStep) {
+          nextValue = roundToStep(nextValue, config.min, config.step);
+          nextValue = clamp(nextValue, config.min, config.max);
+        }
+
+        return nextValue;
+      }
+
+      function syncControl(key, source = "system") {
+        const elements = controlElements[key];
+        const value = state[key];
+
+        elements.range.value = value;
+
+        // 사용자가 number input에 입력 중인 순간에는 커서를 빼앗지 않는다.
+        // blur/change 시점에는 step에 맞춘 값으로 정리되어 다시 완전히 동기화된다.
+        if (source !== "numberTyping") {
+          elements.number.value = value;
+        }
+
+        elements.preview.textContent = formatPreview(key, value);
+      }
+
+      function syncRetirementBounds() {
+        // 퇴직 시기는 총 시뮬레이션 기간을 넘을 수 없으므로 totalYears 변경마다 max를 갱신한다.
+        const maxRetireYear = Math.round(state.totalYears);
+        const retireConfig = controlConfigs.retireYear;
+        retireConfig.max = maxRetireYear;
+
+        controlElements.retireYear.range.max = maxRetireYear;
+        controlElements.retireYear.number.max = maxRetireYear;
+
+        if (state.retireYear > maxRetireYear) {
+          state.retireYear = maxRetireYear;
+          syncControl("retireYear");
+        }
+      }
+
+      function setControlValue(key, rawValue, options = {}) {
+        const config = controlConfigs[key];
+        const isCurrencyTyping = config.unit === "currency" && options.source === "numberTyping";
+        const shouldSnap = options.snapToStep ?? !isCurrencyTyping;
+
+        state[key] = normalizeValue(key, rawValue, shouldSnap);
+
+        if (key === "totalYears") {
+          state.totalYears = Math.round(state.totalYears);
+          syncRetirementBounds();
+        }
+
+        if (key === "retireYear") {
+          state.retireYear = Math.round(state.retireYear);
+        }
+
+        syncControl(key, options.source);
+        renderDashboard();
+      }
+
+      function wireControl(key) {
+        const range = document.getElementById(`${key}Range`);
+        const number = document.getElementById(`${key}Number`);
+        const preview = document.getElementById(`${key}Preview`);
+
+        controlElements[key] = { range, number, preview };
+
+        range.addEventListener("input", () => {
+          setControlValue(key, range.value, { source: "range", snapToStep: true });
+        });
+
+        number.addEventListener("input", () => {
+          if (number.value === "") return;
+          setControlValue(key, number.value, { source: "numberTyping", snapToStep: false });
+        });
+
+        number.addEventListener("change", () => {
+          setControlValue(key, number.value, { source: "number", snapToStep: true });
+        });
+      }
+
+      function syncAssetToggle(asset) {
+        const enabledKey = `${asset}Enabled`;
+        const sectionId = asset === "normal" ? "normalAssetSection" : "retirementAssetSection";
+        const section = document.getElementById(sectionId);
+        const toggle = document.getElementById(enabledKey);
+        const label = document.getElementById(`${enabledKey}Text`);
+        const enabled = state[enabledKey];
+
+        toggle.checked = enabled;
+        label.textContent = enabled ? "ON" : "OFF";
+        section.classList.toggle("asset-disabled", !enabled);
+
+        assetControlKeys[asset].forEach((key) => {
+          controlElements[key].range.disabled = !enabled;
+          controlElements[key].number.disabled = !enabled;
+        });
+      }
+
+      function wireAssetToggle(asset) {
+        const enabledKey = `${asset}Enabled`;
+        const toggle = document.getElementById(enabledKey);
+
+        toggle.addEventListener("change", () => {
+          state[enabledKey] = toggle.checked;
+          syncAssetToggle(asset);
+          renderDashboard();
+        });
+
+        syncAssetToggle(asset);
+      }
+
+      function calculateProjection() {
+        const totalYears = Math.round(state.totalYears);
+        const retireYear = Math.round(state.retireYear);
+
+        let normalAsset = 0;
+        let retirementAsset = 0;
+
+        const labels = [];
+        const normalSeries = [];
+        const retirementSeries = [];
+        const totalSeries = [];
+
+        for (let year = 1; year <= totalYears; year += 1) {
+          labels.push(`${year}년차`);
+
+          if (year <= retireYear) {
+            // 적립기:
+            // 1. 월 적립액을 연간 총액으로 환산해 해당 연도 자산에 먼저 더한다.
+            // 2. 더해진 금액까지 포함한 해당 연도 말 자산에 퇴직 전 연 성장률을 적용한다.
+            // 이 순서를 고정하면 일반 자산과 퇴직금 모두 같은 연 단위 복리 모델로 계산된다.
+            // 일반 자산은 연봉 상승에 따른 월 적립 증가액을 매년 월 적립액에 반영한다.
+            // 예: 기본 월 100만원, 매년 증가 5만원이면 1년차 100만원, 2년차 105만원으로 계산한다.
+            if (state.normalEnabled) {
+              const currentNormalMonthly = state.normalMonthly + state.normalMonthlyIncrease * (year - 1);
+              const normalAnnualContribution = currentNormalMonthly * 12;
+              normalAsset = (normalAsset + normalAnnualContribution) * (1 + state.normalPreRate / 100);
+            }
+
+            // 퇴직금은 연봉 상승에 따른 퇴직금 적립 증가액을 매년 월 적립액에 반영한다.
+            // 예: 기본 월 50만원, 매년 증가 2만원이면 1년차 50만원, 2년차 52만원, 3년차 54만원으로 계산한다.
+            if (state.retirementEnabled) {
+              const currentRetirementMonthly =
+                state.retirementMonthly + state.retirementMonthlyIncrease * (year - 1);
+              const retirementAnnualContribution = currentRetirementMonthly * 12;
+              retirementAsset =
+                (retirementAsset + retirementAnnualContribution) * (1 + state.retirementPreRate / 100);
+            }
+          } else {
+            // 거치기:
+            // 퇴직 시점 이후에는 추가 적립액을 명시적으로 0원으로 본다.
+            // 따라서 퇴직 시점까지 누적된 원금과 수익만 퇴직 후 성장률로 계속 복리 성장한다.
+            if (state.normalEnabled) {
+              normalAsset = normalAsset * (1 + state.normalPostRate / 100);
+            }
+            if (state.retirementEnabled) {
+              retirementAsset = retirementAsset * (1 + state.retirementPostRate / 100);
+            }
+          }
+
+          normalSeries.push(normalAsset);
+          retirementSeries.push(retirementAsset);
+          totalSeries.push(normalAsset + retirementAsset);
+        }
+
+        return {
+          labels,
+          normalSeries,
+          retirementSeries,
+          totalSeries,
+          finalNormal: normalSeries.at(-1) ?? 0,
+          finalRetirement: retirementSeries.at(-1) ?? 0,
+          finalTotal: totalSeries.at(-1) ?? 0,
+          retirementPointNormal: normalSeries[retireYear - 1] ?? 0,
+          retirementPointRetirement: retirementSeries[retireYear - 1] ?? 0,
+          retirementPointTotal: totalSeries[retireYear - 1] ?? 0,
+        };
+      }
+
+      const retirementGuidePlugin = {
+        id: "retirementGuide",
+        beforeDatasetsDraw(chart, args, options) {
+          const { ctx, chartArea, scales } = chart;
+          if (!chartArea || !scales.x) return;
+
+          const retireYear = options.retireYear;
+          const totalYears = options.totalYears;
+          const retireIndex = retireYear - 1;
+          const retireX = scales.x.getPixelForValue(retireIndex);
+
+          if (!Number.isFinite(retireX)) return;
+
+          ctx.save();
+
+          // 퇴직 후 구간을 옅게 칠해 적립 중단 이후의 기울기 변화를 한눈에 구분한다.
+          if (retireYear < totalYears) {
+            ctx.fillStyle = "rgba(37, 99, 235, 0.045)";
+            ctx.fillRect(retireX, chartArea.top, chartArea.right - retireX, chartArea.bottom - chartArea.top);
+          }
+
+          ctx.restore();
+        },
+        afterDatasetsDraw(chart, args, options) {
+          const { ctx, chartArea, scales } = chart;
+          if (!chartArea || !scales.x) return;
+
+          const retireYear = options.retireYear;
+          const retireIndex = retireYear - 1;
+          const retireX = scales.x.getPixelForValue(retireIndex);
+
+          if (!Number.isFinite(retireX)) return;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([6, 6]);
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = "rgba(30, 41, 59, 0.58)";
+          ctx.moveTo(retireX, chartArea.top);
+          ctx.lineTo(retireX, chartArea.bottom);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = "rgba(15, 23, 42, 0.72)";
+          ctx.font = "700 12px system-ui, sans-serif";
+          ctx.textAlign = retireX > chartArea.right - 76 ? "right" : "left";
+          ctx.fillText("퇴직 시점", retireX > chartArea.right - 76 ? retireX - 8 : retireX + 8, chartArea.top + 16);
+          ctx.restore();
+        },
+      };
+
+      Chart.register(retirementGuidePlugin);
+
+      const ctx = document.getElementById("assetChart");
+      const assetChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "일반 자산",
+              data: [],
+              borderColor: chartColors.normal,
+              backgroundColor: "rgba(15, 118, 110, 0.12)",
+              borderWidth: 2.5,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              pointHitRadius: 12,
+              tension: 0.26,
+            },
+            {
+              label: "퇴직금",
+              data: [],
+              borderColor: chartColors.retirement,
+              backgroundColor: "rgba(217, 119, 6, 0.12)",
+              borderWidth: 2.5,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              pointHitRadius: 12,
+              tension: 0.26,
+            },
+            {
+              label: "총 자산 합계",
+              data: [],
+              borderColor: chartColors.total,
+              backgroundColor: "rgba(37, 99, 235, 0.12)",
+              borderWidth: 3.25,
+              pointRadius: 0,
+              pointHoverRadius: 5,
+              pointHitRadius: 12,
+              tension: 0.24,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 180,
+          },
+          interaction: {
+            mode: "index",
+            intersect: false,
+          },
+          elements: {
+            line: {
+              capBezierPoints: true,
+            },
+          },
+          plugins: {
+            legend: {
+              display: false,
+            },
+            retirementGuide: {
+              retireYear: state.retireYear,
+              totalYears: state.totalYears,
+            },
+            tooltip: {
+              backgroundColor: "rgba(15, 23, 42, 0.92)",
+              borderColor: "rgba(255, 255, 255, 0.18)",
+              borderWidth: 1,
+              displayColors: true,
+              padding: 12,
+              titleFont: {
+                weight: "700",
+              },
+              bodyFont: {
+                weight: "600",
+              },
+              callbacks: {
+                label(context) {
+                  return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              grid: {
+                color: "rgba(148, 163, 184, 0.16)",
+              },
+              ticks: {
+                color: chartColors.text,
+                font: {
+                  weight: "700",
+                },
+                maxRotation: 0,
+                autoSkipPadding: 18,
+              },
+            },
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: chartColors.grid,
+              },
+              border: {
+                display: false,
+              },
+              ticks: {
+                color: chartColors.text,
+                font: {
+                  weight: "700",
+                },
+                callback(value) {
+                  return formatAxisCurrency(value);
+                },
+              },
+            },
+          },
+        },
+      });
+
+      function applyPhaseLineStyle() {
+        // 퇴직 시점 다음 구간부터 점선으로 전환해 성장률 변경 구간을 선 자체에서도 구분한다.
+        const retireIndex = Math.round(state.retireYear) - 1;
+        assetChart.data.datasets.forEach((dataset) => {
+          dataset.segment = {
+            borderDash(context) {
+              return context.p0DataIndex >= retireIndex ? [7, 5] : undefined;
+            },
+          };
+        });
+      }
+
+      function updateSummaryCards(projection) {
+        const totalYears = Math.round(state.totalYears);
+        const retireYear = Math.round(state.retireYear);
+        const holdYears = Math.max(totalYears - retireYear, 0);
+
+        document.getElementById("finalNormal").textContent = formatCurrency(projection.finalNormal);
+        document.getElementById("finalRetirement").textContent = formatCurrency(projection.finalRetirement);
+        document.getElementById("finalTotal").textContent = formatCurrency(projection.finalTotal);
+        document.getElementById("retirementPointNormal").textContent = formatCurrency(projection.retirementPointNormal);
+        document.getElementById("retirementPointRetirement").textContent = formatCurrency(
+          projection.retirementPointRetirement
+        );
+        document.getElementById("retirementPointTotal").textContent = formatCurrency(projection.retirementPointTotal);
+
+        document.getElementById("finalNormalYear").textContent = `투자 ${totalYears}년차 기준`;
+        document.getElementById("finalRetirementYear").textContent = `투자 ${totalYears}년차 기준`;
+        document.getElementById("finalTotalYear").textContent = `투자 ${totalYears}년차 기준`;
+        document.getElementById("retirementPointNormalYear").textContent = `퇴직 ${retireYear}년차 기준`;
+        document.getElementById("retirementPointRetirementYear").textContent = `퇴직 ${retireYear}년차 기준`;
+        document.getElementById("retirementPointYear").textContent = `퇴직 ${retireYear}년차 기준`;
+
+        document.getElementById("scenarioBadge").textContent = `${totalYears}년 시뮬레이션 / ${retireYear}년차 퇴직`;
+        document.getElementById("phaseText").textContent = `적립기 ${retireYear}년 / 거치기 ${holdYears}년`;
+      }
+
+      function renderDashboard() {
+        const projection = calculateProjection();
+
+        updateSummaryCards(projection);
+        applyPhaseLineStyle();
+
+        assetChart.data.labels = projection.labels;
+        assetChart.data.datasets[0].data = projection.normalSeries;
+        assetChart.data.datasets[1].data = projection.retirementSeries;
+        assetChart.data.datasets[2].data = projection.totalSeries;
+
+        assetChart.options.plugins.retirementGuide.retireYear = Math.round(state.retireYear);
+        assetChart.options.plugins.retirementGuide.totalYears = Math.round(state.totalYears);
+
+        assetChart.update("none");
+      }
+
+      Object.keys(controlConfigs).forEach(wireControl);
+      Object.keys(controlConfigs).forEach((key) => syncControl(key));
+      wireAssetToggle("normal");
+      wireAssetToggle("retirement");
+      syncRetirementBounds();
+      renderDashboard();
+    </script>
+  </body>
+</html>
