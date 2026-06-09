@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, NotebookPen, RotateCcw, Save, XCircle } from "lucide-react";
 import clsx from "clsx";
@@ -57,9 +58,27 @@ export function LessonClient({ lessonId }: LessonClientProps) {
 
         const [quizResult, noteResult, progressResult, masteryResult] = await Promise.all([
           supabase.from("quizzes").select("*").eq("lesson_id", lessonId).order("sort_order", { ascending: true }),
-          supabase.from("learning_notes").select("*").eq("user_id", currentUser.id).eq("lesson_id", lessonId).maybeSingle(),
-          supabase.from("user_progress").select("*").eq("user_id", currentUser.id).eq("lesson_id", lessonId).maybeSingle(),
-          supabase.from("concept_mastery").select("*").eq("user_id", currentUser.id).eq("lesson_id", lessonId).maybeSingle()
+          supabase
+            .from("learning_notes")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .eq("lesson_id", lessonId)
+            .order("updated_at", { ascending: false })
+            .limit(1),
+          supabase
+            .from("user_progress")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .eq("lesson_id", lessonId)
+            .order("updated_at", { ascending: false })
+            .limit(1),
+          supabase
+            .from("concept_mastery")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .eq("lesson_id", lessonId)
+            .order("updated_at", { ascending: false })
+            .limit(1)
         ]);
 
         const firstError = quizResult.error || noteResult.error || progressResult.error || masteryResult.error;
@@ -82,31 +101,21 @@ export function LessonClient({ lessonId }: LessonClientProps) {
         }
 
         const now = new Date().toISOString();
-        const existingProgress = progressResult.data as UserProgress | null;
-        const progressSaveResult = await supabase
-          .from("user_progress")
-          .upsert(
-            {
-              user_id: currentUser.id,
-              lesson_id: lessonId,
-              status: existingProgress?.completed ? "completed" : "in_progress",
-              completed: existingProgress?.completed ?? false,
-              started_at: existingProgress?.started_at ?? now,
-              completed_at: existingProgress?.completed_at ?? null,
-              last_viewed_at: now,
-              updated_at: now
-            },
-            { onConflict: "user_id,lesson_id" }
-          )
-          .select("*")
-          .single();
+        const existingProgress = firstRow(progressResult.data) as UserProgress | null;
+        const savedProgress = await saveProgressRow({
+          lessonId,
+          userId: currentUser.id,
+          existingProgress,
+          completed: existingProgress?.completed ?? false,
+          now
+        });
 
-        if (progressSaveResult.error) {
-          setDataError(progressSaveResult.error.message);
+        if (savedProgress.error) {
+          setDataError(savedProgress.error);
           return;
         }
 
-        const mastery = masteryResult.data as ConceptMastery | null;
+        const mastery = firstRow(masteryResult.data) as ConceptMastery | null;
         if (mastery) {
           setMasteryScore(String(mastery.mastery_score));
           setMasteryNote(mastery.note ?? "");
@@ -120,13 +129,47 @@ export function LessonClient({ lessonId }: LessonClientProps) {
             options: options.filter((option) => option.quiz_id === quiz.id)
           })) as QuizWithOptions[]
         );
-        setProgress(progressSaveResult.data as UserProgress);
-        setNote(((noteResult.data as LearningNote | null)?.content ?? ""));
+        setProgress(savedProgress.row);
+        setNote(((firstRow(noteResult.data) as LearningNote | null)?.content ?? ""));
       } catch (loadError) {
         setDataError(loadError instanceof Error ? loadError.message : "학습 페이지를 불러오지 못했습니다.");
       } finally {
         setLoadingData(false);
       }
+    }
+
+    async function saveProgressRow({
+      lessonId,
+      userId,
+      existingProgress,
+      completed,
+      now
+    }: {
+      lessonId: string;
+      userId: string;
+      existingProgress: UserProgress | null;
+      completed: boolean;
+      now: string;
+    }): Promise<{ row: UserProgress | null; error: string }> {
+      const payload = {
+        user_id: userId,
+        lesson_id: lessonId,
+        status: completed ? "completed" : "in_progress",
+        completed,
+        started_at: existingProgress?.started_at ?? now,
+        completed_at: existingProgress?.completed_at ?? null,
+        last_viewed_at: now,
+        updated_at: now
+      };
+
+      const result = existingProgress
+        ? await supabase.from("user_progress").update(payload).eq("id", existingProgress.id).eq("user_id", userId).select("*").limit(1)
+        : await supabase.from("user_progress").insert(payload).select("*").limit(1);
+
+      return {
+        row: firstRow(result.data) as UserProgress | null,
+        error: result.error?.message ?? ""
+      };
     }
 
     loadLesson();
@@ -140,15 +183,27 @@ export function LessonClient({ lessonId }: LessonClientProps) {
     setSavingNote(true);
     setMessage("");
 
-    const result = await client.from("learning_notes").upsert(
-      {
-        user_id: user.id,
-        lesson_id: lessonId,
-        content: note,
-        updated_at: new Date().toISOString()
-      },
-      { onConflict: "user_id,lesson_id" }
-    );
+    const existingResult = await client
+      .from("learning_notes")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("lesson_id", lessonId)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    const existing = firstRow(existingResult.data) as LearningNote | null;
+    const payload = {
+      user_id: user.id,
+      lesson_id: lessonId,
+      content: note,
+      updated_at: new Date().toISOString()
+    };
+
+    const result = existingResult.error
+      ? existingResult
+      : existing
+        ? await client.from("learning_notes").update(payload).eq("id", existing.id).eq("user_id", user.id)
+        : await client.from("learning_notes").insert(payload);
 
     setSavingNote(false);
     setMessage(result.error ? result.error.message : "메모를 저장했습니다.");
@@ -179,21 +234,17 @@ export function LessonClient({ lessonId }: LessonClientProps) {
     setMessage("");
 
     const score = clampNumber(Number(masteryScore), 0, 100);
-    const result = await client.from("concept_mastery").upsert(
-      {
-        user_id: user.id,
-        lesson_id: lesson.id,
-        concept_name: lesson.title,
-        mastery_score: score,
-        is_weak: isWeakConcept || score <= 60,
-        note: masteryNote,
-        last_reviewed_at: new Date().toISOString()
-      },
-      { onConflict: "user_id,lesson_id,concept_name" }
-    );
+    const result = await upsertMasteryByLesson({
+      lessonId: lesson.id,
+      userId: user.id,
+      conceptName: lesson.title,
+      masteryScore: score,
+      isWeak: isWeakConcept || score <= 60,
+      note: masteryNote
+    });
 
     setSavingMastery(false);
-    setMessage(result.error ? result.error.message : "이해도 평가를 저장했습니다.");
+    setMessage(result.error ? result.error : "이해도 평가를 저장했습니다.");
   }
 
   async function submitQuiz() {
@@ -239,36 +290,62 @@ export function LessonClient({ lessonId }: LessonClientProps) {
     const now = new Date().toISOString();
     const progressResult = await client
       .from("user_progress")
-      .upsert(
-        {
-          user_id: user.id,
-          lesson_id: lesson.id,
-          status: allCorrect ? "completed" : "in_progress",
-          completed: allCorrect,
-          completed_at: allCorrect ? now : null,
-          last_viewed_at: now,
-          updated_at: now
-        },
-        { onConflict: "user_id,lesson_id" }
-      )
       .select("*")
-      .single();
+      .eq("user_id", user.id)
+      .eq("lesson_id", lesson.id)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (progressResult.error) {
+      setMessage(progressResult.error.message);
+      setSubmitting(false);
+      return;
+    }
+
+    const existingProgress = firstRow(progressResult.data) as UserProgress | null;
+    const progressPayload = {
+      user_id: user.id,
+      lesson_id: lesson.id,
+      status: allCorrect ? "completed" : "in_progress",
+      completed: allCorrect,
+      started_at: existingProgress?.started_at ?? now,
+      completed_at: allCorrect ? now : null,
+      last_viewed_at: now,
+      updated_at: now
+    };
+
+    const progressSaveResult = existingProgress
+      ? await client.from("user_progress").update(progressPayload).eq("id", existingProgress.id).eq("user_id", user.id).select("*").limit(1)
+      : await client.from("user_progress").insert(progressPayload).select("*").limit(1);
+
+    if (progressSaveResult.error) {
+      setMessage(progressSaveResult.error.message);
+      setSubmitting(false);
+      return;
+    }
 
     if (allCorrect) {
       await createReviewSchedule(lesson.id);
       await saveCompletionMastery(lesson.id, lesson.title);
     }
 
-    if (progressResult.data) setProgress(progressResult.data as UserProgress);
+    const savedProgress = firstRow(progressSaveResult.data) as UserProgress | null;
+    if (savedProgress) setProgress(savedProgress);
     setResults(nextResults);
-    setMessage(allCorrect ? "모든 문제를 맞혔습니다. 단원 완료와 복습 일정 생성을 처리했습니다." : "틀린 문제를 오답노트에 저장했습니다.");
+    setMessage(allCorrect ? "모든 문제를 맞혔습니다. 단원 완료와 복습 일정을 처리했습니다." : "틀린 문제를 오답노트에 저장했습니다.");
     setSubmitting(false);
   }
 
   async function saveWrongNote(quiz: QuizWithOptions, selectedOption: QuizOption, correctOption: QuizOption) {
     if (!client || !user) return;
 
-    const existingResult = await client.from("wrong_notes").select("*").eq("user_id", user.id).eq("quiz_id", quiz.id).maybeSingle();
+    const existingResult = await client
+      .from("wrong_notes")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("quiz_id", quiz.id)
+      .order("updated_at", { ascending: false })
+      .limit(1);
     const now = new Date().toISOString();
     const payload = {
       user_id: user.id,
@@ -282,8 +359,8 @@ export function LessonClient({ lessonId }: LessonClientProps) {
       updated_at: now
     };
 
-    if (existingResult.data) {
-      const existing = existingResult.data as WrongNote;
+    const existing = firstRow(existingResult.data) as WrongNote | null;
+    if (existing) {
       await client.from("wrong_notes").update({ ...payload, attempt_count: existing.attempt_count + 1 }).eq("id", existing.id).eq("user_id", user.id);
       return;
     }
@@ -315,21 +392,63 @@ export function LessonClient({ lessonId }: LessonClientProps) {
     if (!client || !user) return;
 
     const nextScore = Math.max(clampNumber(Number(masteryScore), 0, 100), 100);
-    await client.from("concept_mastery").upsert(
-      {
-        user_id: user.id,
-        lesson_id: completedLessonId,
-        concept_name: conceptName,
-        mastery_score: nextScore,
-        is_weak: false,
-        note: masteryNote,
-        last_reviewed_at: new Date().toISOString()
-      },
-      { onConflict: "user_id,lesson_id,concept_name" }
-    );
+    await upsertMasteryByLesson({
+      lessonId: completedLessonId,
+      userId: user.id,
+      conceptName,
+      masteryScore: nextScore,
+      isWeak: false,
+      note: masteryNote
+    });
 
     setMasteryScore(String(nextScore));
     setIsWeakConcept(false);
+  }
+
+  async function upsertMasteryByLesson({
+    lessonId,
+    userId,
+    conceptName,
+    masteryScore,
+    isWeak,
+    note
+  }: {
+    lessonId: string;
+    userId: string;
+    conceptName: string;
+    masteryScore: number;
+    isWeak: boolean;
+    note: string;
+  }): Promise<{ error: string }> {
+    if (!client) return { error: "Supabase 클라이언트가 준비되지 않았습니다." };
+
+    const existingResult = await client
+      .from("concept_mastery")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("lesson_id", lessonId)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (existingResult.error) return { error: existingResult.error.message };
+
+    const existing = firstRow(existingResult.data) as ConceptMastery | null;
+    const payload = {
+      user_id: userId,
+      lesson_id: lessonId,
+      concept_name: conceptName,
+      mastery_score: masteryScore,
+      is_weak: isWeak,
+      note,
+      last_reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const result = existing
+      ? await client.from("concept_mastery").update(payload).eq("id", existing.id).eq("user_id", userId)
+      : await client.from("concept_mastery").insert(payload);
+
+    return { error: result.error?.message ?? "" };
   }
 
   function resetQuiz() {
@@ -490,7 +609,7 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
-function SidePanel({ title, children }: { title: string; children: React.ReactNode }) {
+function SidePanel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-lg border border-line bg-white p-5 shadow-soft">
       <h3 className="mb-3 text-lg font-black">{title}</h3>
@@ -506,6 +625,10 @@ function Input({ label, value, onChange, type = "text" }: { label: string; value
       <input type={type} value={value} onChange={(event) => onChange(event.target.value)} className="h-10 rounded-md border border-line px-3 text-ink" />
     </label>
   );
+}
+
+function firstRow<T>(rows: T[] | null | undefined) {
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 }
 
 function clampNumber(value: number, min: number, max: number) {

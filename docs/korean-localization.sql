@@ -1004,3 +1004,79 @@ from (
     )
 ) as texts(id, question, scenario, options, explanation)
 where mockq.id = texts.id::uuid;
+
+-- --------------------------------------------------------------------
+-- Duplicate cleanup for existing learner records
+-- --------------------------------------------------------------------
+-- If earlier SQL runs created duplicate user-owned rows, Supabase .single()
+-- style reads can fail with:
+-- "JSON object requested, multiple (or no) rows returned".
+-- Keep the newest row per user/lesson or user/quiz and remove the rest.
+
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by user_id, lesson_id
+      order by updated_at desc nulls last, created_at desc nulls last, id desc
+    ) as row_number
+  from public.learning_notes
+)
+delete from public.learning_notes
+using ranked
+where public.learning_notes.id = ranked.id
+  and ranked.row_number > 1;
+
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by user_id, lesson_id
+      order by updated_at desc nulls last, last_viewed_at desc nulls last, created_at desc nulls last, id desc
+    ) as row_number
+  from public.user_progress
+)
+delete from public.user_progress
+using ranked
+where public.user_progress.id = ranked.id
+  and ranked.row_number > 1;
+
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by user_id, quiz_id
+      order by updated_at desc nulls last, created_at desc nulls last, id desc
+    ) as row_number
+  from public.wrong_notes
+)
+delete from public.wrong_notes
+using ranked
+where public.wrong_notes.id = ranked.id
+  and ranked.row_number > 1;
+
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by user_id, lesson_id
+      order by updated_at desc nulls last, last_reviewed_at desc nulls last, created_at desc nulls last, id desc
+    ) as row_number
+  from public.concept_mastery
+)
+delete from public.concept_mastery
+using ranked
+where public.concept_mastery.id = ranked.id
+  and ranked.row_number > 1;
+
+create unique index if not exists idx_learning_notes_user_lesson_unique
+on public.learning_notes(user_id, lesson_id);
+
+create unique index if not exists idx_user_progress_user_lesson_unique
+on public.user_progress(user_id, lesson_id);
+
+create unique index if not exists idx_wrong_notes_user_quiz_unique
+on public.wrong_notes(user_id, quiz_id);
+
+create unique index if not exists idx_concept_mastery_user_lesson_unique
+on public.concept_mastery(user_id, lesson_id);
